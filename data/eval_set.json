@@ -1,0 +1,267 @@
+[
+  {
+    "name": "pool exhaustion, different service and pool size",
+    "log": "2025-06-12T19:44:01Z ERROR inventory-api GET /stock/sku-881 failed\nTraceback (most recent call last):\n  File \"/srv/inventory/handlers.py\", line 77, in get_stock\n    row = db.execute(stmt).first()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 171, in _do_get\n    raise exc.TimeoutError(\nsqlalchemy.exc.TimeoutError: QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00",
+    "expected_family": "pg-pool-exhaustion"
+  },
+  {
+    "name": "NPE on null address, different getter",
+    "log": "2025-07-01 14:02:55.901 ERROR [billing-service,a91c] c.a.billing.ShippingQuote - quote failed\njava.lang.NullPointerException: Cannot invoke \"com.acme.model.Address.getPostalCode()\" because the return value of \"com.acme.model.Customer.getBillingAddress()\" is null\n\tat com.acme.billing.TaxCalculator.zoneFor(TaxCalculator.java:81)\n\tat com.acme.billing.ShippingQuote.compute(ShippingQuote.java:45)",
+    "expected_family": "java-npe-missing-address"
+  },
+  {
+    "name": "OOMKilled, different pod",
+    "log": "Name: pdf-renderer-7c4b9d8f6-qq9zt\nState: Waiting\n  Reason: CrashLoopBackOff\nLast State: Terminated\n  Reason: OOMKilled\n  Exit Code: 137\nRestart Count: 12\nLimits:\n  memory: 256Mi\nEvents:\n  Warning BackOff kubelet Back-off restarting failed container pdf-renderer",
+    "expected_family": "k8s-oomkilled"
+  },
+  {
+    "name": "npm ci lockfile drift, different package",
+    "log": "Run npm ci\nnpm ERR! code EUSAGE\nnpm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm ERR! Invalid: lock file's zod@3.22.0 does not satisfy zod@3.23.8\nError: Process completed with exit code 1.",
+    "expected_family": "npm-lockfile-drift"
+  },
+  {
+    "name": "redis refused, different host",
+    "log": "2025-08-09T07:21:33Z ERROR rate-limiter\nTraceback (most recent call last):\n  File \"/app/limiter/bucket.py\", line 52, in take\n    count = self.redis.incr(key)\n  File \"/usr/local/lib/python3.12/site-packages/redis/connection.py\", line 707, in connect\n    raise ConnectionError(self._error_message(e))\nredis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused.",
+    "expected_family": "redis-failover-refused"
+  },
+  {
+    "name": "expired cert via httpx",
+    "log": "2025-09-30T23:59:58Z ERROR ledger-sync upstream call failed\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)\n  url=https://ledger.internal.acme.io/v1/entries",
+    "expected_family": "tls-cert-expired"
+  },
+  {
+    "name": "unhandled rejection, ECONNRESET",
+    "log": "node:internal/process/promises:289\n            triggerUncaughtException(err, true /* fromPromise */);\n            ^\n\n[UnhandledPromiseRejection: This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). The promise rejected with the reason \"Error: read ECONNRESET\".] {\n  code: 'ERR_UNHANDLED_REJECTION'\n}\nNode.js v20.14.0",
+    "expected_family": "node-unhandled-rejection"
+  },
+  {
+    "name": "terraform lock, different state path",
+    "log": "Error: Error acquiring the state lock\n\nError message: ConditionalCheckFailedException: The conditional request failed\nLock Info:\n  ID:        e0c1d2f3-0000-4aaa-bbbb-123456789abc\n  Path:      acme-tf-state/staging/eks.tfstate\n  Operation: OperationTypePlan\n  Who:       runner@ip-10-0-2-40\n  Version:   1.8.1\n  Created:   2025-10-02 04:10:55 UTC",
+    "expected_family": "terraform-state-lock"
+  },
+  {
+    "name": "kafka max.poll.interval exceeded",
+    "log": "2025-05-14 09:12:00,101 WARN  o.a.k.c.c.i.ConsumerCoordinator - [Consumer clientId=audit-consumer-1, groupId=audit] Offset commit failed on partition audit-2 at offset 44120\norg.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms",
+    "expected_family": "kafka-rebalance-storm"
+  },
+  {
+    "name": "go nil map, different package",
+    "log": "panic: assignment to entry in nil map\n\ngoroutine 1 [running]:\ngithub.com/acme/auth-gw/internal/settings.(*Settings).mergeEnv(0xc000124000)\n\t/src/internal/settings/settings.go:63 +0x11c\nmain.main()\n\t/src/cmd/auth-gw/main.go:22 +0x51\nexit status 2",
+    "expected_family": "go-nil-map"
+  },
+  {
+    "name": "S3 KMS access denied on GetObject",
+    "log": "botocore.exceptions.ClientError: An error occurred (AccessDenied) when calling the GetObject operation: User: arn:aws:sts::123456789012:assumed-role/etl-reader/i-0def is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:us-west-2:123456789012:key/9z8y",
+    "expected_family": "s3-kms-access-denied"
+  },
+  {
+    "name": "WAL disk full",
+    "log": "2025-11-02 13:40:12.551 UTC [1] PANIC:  could not write to file \"pg_wal/xlogtemp.9981\": No space left on device\n2025-11-02 13:40:12.553 UTC [1] LOG:  server process (PID 9981) was terminated by signal 6: Aborted\n2025-11-02 13:40:13.010 UTC [1] LOG:  database system is shut down",
+    "expected_family": "pg-wal-disk-full"
+  },
+  {
+    "name": "liveness probe on slow start",
+    "log": "Warning  Unhealthy  90s (x6 over 3m)  kubelet  Liveness probe failed: Get \"http://10.1.9.3:8080/actuator/health\": dial tcp 10.1.9.3:8080: connect: connection refused\nNormal   Killing    90s (x2 over 3m)  kubelet  Container search-service failed liveness probe, will be restarted",
+    "expected_family": "k8s-liveness-slow-start"
+  },
+  {
+    "name": "celery redelivery duplicate",
+    "log": "[2025-04-20 02:30:10,002: WARNING/MainProcess] Received task export_csv[aa71] (redelivered=True)\n[2025-04-20 02:30:10,004: ERROR/ForkPoolWorker-2] Task export_csv[aa71] raised unexpected: IntegrityError('duplicate key value violates unique constraint \"exports_job_id_key\"')",
+    "expected_family": "celery-visibility-timeout"
+  },
+  {
+    "name": "novel: segfault in native extension (no good match)",
+    "log": "Fatal Python error: Segmentation fault\n\nCurrent thread 0x00007f2a1b3c4740 (most recent call first):\n  File \"/usr/local/lib/python3.12/site-packages/numpy/core/_methods.py\", line 49 in _sum\n  File \"/app/features/vectorize.py\", line 118 in build_matrix\nExtension modules: numpy.core._multiarray_umath, scipy.sparse._sparsetools (total: 12)\nSegmentation fault (core dumped)",
+    "expected_family": null
+  },
+  {
+    "name": "pg-too-many-clients (holdout)",
+    "expected_family": "pg-too-many-clients",
+    "log": "Jun 11 14:22:09 api-7 node[12]: Error: sorry, too many clients already\n    at Parser.parseErrorMessage (/srv/node_modules/pg-protocol/dist/parser.js:287:98)\n    at Client._handleErrorMessage (/srv/node_modules/pg/lib/client.js:335:17)\n  severity: 'FATAL', code: '53300'"
+  },
+  {
+    "name": "pg-statement-timeout (holdout)",
+    "expected_family": "pg-statement-timeout",
+    "log": "org.postgresql.util.PSQLException: ERROR: canceling statement due to statement timeout\n\tat org.postgresql.core.v3.QueryExecutorImpl.receiveErrorResponse(QueryExecutorImpl.java:2713)\n\tat com.acme.analytics.RevenueRepository.byRegion(RevenueRepository.java:88)"
+  },
+  {
+    "name": "redis-oom-maxmemory (holdout)",
+    "expected_family": "redis-oom-maxmemory",
+    "log": "ReplyError: OOM command not allowed when used memory > 'maxmemory'.\n    at parseError (/app/node_modules/redis-parser/lib/parser.js:179:12)\n    at RedisClient.set (/app/src/cache.js:31:18)\n  command: 'SET', args: [ 'feed:user:88213', '[...]' ], code: 'OOM'"
+  },
+  {
+    "name": "redis-slow-command-timeout (holdout)",
+    "expected_family": "redis-slow-command-timeout",
+    "log": "io.lettuce.core.RedisCommandTimeoutException: Command timed out after 2 second(s)\n\tat io.lettuce.core.internal.ExceptionFactory.createTimeoutException(ExceptionFactory.java:59)\n\tat com.acme.profile.ProfileCache.get(ProfileCache.java:41)"
+  },
+  {
+    "name": "k8s-imagepullbackoff (holdout)",
+    "expected_family": "k8s-imagepullbackoff",
+    "log": "NAME                              READY   STATUS             RESTARTS   AGE\nnotifier-5d8c7f9b6d-k2l8p         0/1     ImagePullBackOff   0          6m\n\nWarning  Failed  kubelet  Failed to pull image \"ghcr.io/acme/notifier:v2.14.0\": not found"
+  },
+  {
+    "name": "k8s-crashloop-missing-env (holdout)",
+    "expected_family": "k8s-crashloop-missing-env",
+    "log": "Error: Cannot find module config value: STRIPE_API_KEY is undefined\n    at loadConfig (/app/dist/config.js:22:11)\nnpm ERR! code 1\n\nbilling-ui-6f7d9c8b4-p9q2r   0/1   CrashLoopBackOff   5 (30s ago)   4m"
+  },
+  {
+    "name": "k8s-pending-insufficient-cpu (holdout)",
+    "expected_family": "k8s-pending-insufficient-cpu",
+    "log": "Warning  FailedScheduling  default-scheduler  0/9 nodes are available: 3 node(s) had untolerated taint {dedicated: gpu}, 6 Insufficient cpu.\nPod etl-runner-28417360-xk2vb is Pending"
+  },
+  {
+    "name": "java-heap-oom (holdout)",
+    "expected_family": "java-heap-oom",
+    "log": "Exception in thread \"kafka-consumer-1\" java.lang.OutOfMemoryError: Java heap space\n\tat java.base/java.util.Arrays.copyOf(Arrays.java:3537)\n\tat java.base/java.util.ArrayList.grow(ArrayList.java:237)\n\tat com.acme.audit.EventBuffer.add(EventBuffer.java:27)"
+  },
+  {
+    "name": "node-heap-oom-build (holdout)",
+    "expected_family": "node-heap-oom-build",
+    "log": "Creating an optimized production build...\n\n<--- JS stacktrace --->\nFATAL ERROR: Ineffective mark-compacts near heap limit Allocation failed - JavaScript heap out of memory\n 1: 0xb7b3e0 node::Abort() [node]\nnpm ERR! code ELIFECYCLE"
+  },
+  {
+    "name": "npm-eresolve-peer (holdout)",
+    "expected_family": "npm-eresolve-peer",
+    "log": "npm error code ERESOLVE\nnpm error ERESOLVE could not resolve\nnpm error While resolving: eslint-config-acme@4.0.0\nnpm error Found: eslint@9.3.0\nnpm error Could not resolve dependency:\nnpm error peer eslint@\"^8.56.0\" from @typescript-eslint/parser@7.2.0"
+  },
+  {
+    "name": "tls-hostname-mismatch (holdout)",
+    "expected_family": "tls-hostname-mismatch",
+    "log": "curl: (60) SSL: no alternative certificate subject name matches target host name 'api.eu.acme.io'\nMore details here: https://curl.se/docs/sslcerts.html"
+  },
+  {
+    "name": "tls-missing-ca-bundle (holdout)",
+    "expected_family": "tls-missing-ca-bundle",
+    "log": "Error: unable to get local issuer certificate\n    at TLSSocket.onConnectSecure (node:_tls_wrap:1674:34)\n  code: 'UNABLE_TO_GET_ISSUER_CERT_LOCALLY'\n  host: 'artifacts.internal.acme.io'"
+  },
+  {
+    "name": "s3-bucket-policy-deny (holdout)",
+    "expected_family": "s3-bucket-policy-deny",
+    "log": "An error occurred (AccessDenied) when calling the GetObject operation: Access Denied with an explicit deny in a resource-based policy\nupload failed: s3://acme-backups/db/2025-06-01.dump"
+  },
+  {
+    "name": "aws-expired-token (holdout)",
+    "expected_family": "aws-expired-token",
+    "log": "ExpiredTokenException: The security token included in the request is expired\n    at Request.extractError (/app/node_modules/aws-sdk/lib/protocol/json.js:61:27)\n  code: 'ExpiredTokenException', statusCode: 400, retryable: false"
+  },
+  {
+    "name": "dynamodb-hot-partition (holdout)",
+    "expected_family": "dynamodb-hot-partition",
+    "log": "software.amazon.awssdk.services.dynamodb.model.ProvisionedThroughputExceededException: Rate of requests exceeds the allowed throughput. (Service: DynamoDb, Status Code: 400)\n\tat com.acme.clicks.ClickWriter.write(ClickWriter.java:52)"
+  },
+  {
+    "name": "kafka-not-leader (holdout)",
+    "expected_family": "kafka-not-leader",
+    "log": "KafkaError{code=NOT_LEADER_FOR_PARTITION,val=6,str=\"Broker: Not leader for partition\"}\nconfluent_kafka: Delivery failed for message to payments-1"
+  },
+  {
+    "name": "go-nil-pointer-http (holdout)",
+    "expected_family": "go-nil-pointer-http",
+    "log": "panic: runtime error: invalid memory address or nil pointer dereference\n[signal SIGSEGV: segmentation violation code=0x1 addr=0x18 pc=0x9a31c2]\ngoroutine 77 [running]:\nmain.(*Server).handleWebhook(0xc000180000, {0xb2e5a0, 0xc0001c41c0}, 0xc000212000)\n\t/app/webhook.go:103 +0x2c2"
+  },
+  {
+    "name": "go-concurrent-map-writes (holdout)",
+    "expected_family": "go-concurrent-map-writes",
+    "log": "fatal error: concurrent map read and map write\n\ngoroutine 45 [running]:\ninternal/runtime/maps.fatal({0x8a1f2b?, 0x0?})\ngithub.com/acme/featureflags.(*Store).Get(...)\n\t/src/store.go:22"
+  },
+  {
+    "name": "terraform-provider-constraint (holdout)",
+    "expected_family": "terraform-provider-constraint",
+    "log": "Error: Incompatible provider version\n\nProvider registry.terraform.io/hashicorp/google v6.2.0 does not have a package available for your current platform, or the locked version conflicts with the configuration constraint \"~> 5.30\"."
+  },
+  {
+    "name": "gha-token-permissions (holdout)",
+    "expected_family": "gha-token-permissions",
+    "log": "remote: Permission to acme/docs.git denied to github-actions[bot].\nfatal: unable to access 'https://github.com/acme/docs/': The requested URL returned error: 403\nError: Process completed with exit code 128."
+  },
+  {
+    "name": "docker-base-image-missing (holdout)",
+    "expected_family": "docker-base-image-missing",
+    "log": "Step 1/12 : FROM node:14-alpine3.12\nmanifest for node:14-alpine3.12 not found: manifest unknown: manifest unknown\nError: Process completed with exit code 1."
+  },
+  {
+    "name": "pytest-db-in-use (holdout)",
+    "expected_family": "pytest-db-in-use",
+    "log": "sqlalchemy.exc.OperationalError: (psycopg2.errors.ObjectInUse) database \"app_test\" is being accessed by other users\nDETAIL:  There is 1 other session using the database.\n[SQL: DROP DATABASE app_test]\nFAILED tests/integration/test_api.py - setup error"
+  },
+  {
+    "name": "python-transitive-dep-break (holdout)",
+    "expected_family": "python-transitive-dep-break",
+    "log": "ImportError: cannot import name 'url_quote' from 'werkzeug.urls' (/usr/local/lib/python3.11/site-packages/werkzeug/urls.py)\n  File \"/srv/app.py\", line 3, in <module>\n    from flask import Flask"
+  },
+  {
+    "name": "celery-worker-sigkill (holdout)",
+    "expected_family": "celery-worker-sigkill",
+    "log": "[2025-07-02 22:15:44,004: ERROR/MainProcess] Task reports.build_pdf[c1d2] raised unexpected: WorkerLostError('Worker exited prematurely: signal 9 (SIGKILL) Job: 77.')"
+  },
+  {
+    "name": "dns-ndots-coredns (holdout)",
+    "expected_family": "dns-ndots-coredns",
+    "log": "Error: getaddrinfo EAI_AGAIN api.partner.example.com\n    at GetAddrInfoReqWrap.onlookup [as oncomplete] (node:dns:107:26)\n  errno: -3001, code: 'EAI_AGAIN', syscall: 'getaddrinfo'"
+  },
+  {
+    "name": "lambda-oom (holdout)",
+    "expected_family": "lambda-oom",
+    "log": "REPORT RequestId: e9f8d7c6-3333-4d4d-8e8e-2f2f2f2f2f2f Duration: 9120.10 ms Billed Duration: 9121 ms Memory Size: 1024 MB Max Memory Used: 1024 MB\nRequestId: e9f8d7c6-3333-4d4d-8e8e-2f2f2f2f2f2f Error: Runtime exited with error: signal: killed"
+  },
+  {
+    "name": "alembic-multiple-heads (holdout)",
+    "expected_family": "alembic-multiple-heads",
+    "log": "CommandError: Conflicting migrations detected; multiple leaf nodes in the migration graph: (0042_add_invoice_status, 0042_customer_tier in billing).\nTo fix them run 'python manage.py makemigrations --merge'"
+  },
+  {
+    "name": "pip install, disk full on runner",
+    "expected_family": "docker-no-space",
+    "log": "#9 [stage-1 4/6] RUN npm ci --omit=dev\n#9 18.7 npm ERR! code ENOSPC\n#9 18.7 npm ERR! syscall write\n#9 18.7 npm ERR! errno -28\n#9 18.7 npm ERR! nospc ENOSPC: no space left on device, write\nERROR: failed to solve: process \"/bin/sh -c npm ci --omit=dev\" did not complete successfully: exit code: 228"
+  },
+  {
+    "name": "date assertion off by one day",
+    "expected_family": "pytest-timezone-flaky",
+    "log": "FAILED tests/test_billing.py::test_invoice_due_date - AssertionError: assert '2025-11-01' == '2025-10-31'\n  - 2025-10-31\n  + 2025-11-01\n1 failed, 388 passed in 52.10s"
+  },
+  {
+    "name": "deadlock during schema migration",
+    "expected_family": "pg-migration-deadlock",
+    "log": "django.db.utils.OperationalError: deadlock detected\nDETAIL:  Process 9921 waits for AccessExclusiveLock on relation 18874 of database 16384; blocked by process 9875.\nProcess 9875 waits for RowShareLock on relation 18880 of database 16384; blocked by process 9921.\n  Applying orders.0057_add_status_index..."
+  },
+  {
+    "name": "lambda timed out on outbound call",
+    "expected_family": "lambda-timeout",
+    "log": "2025-08-20T04:11:59.880Z c0ffee00-4444-4e4e-8f8f-3a3a3a3a3a3a Task timed out after 15.02 seconds\nREPORT RequestId: c0ffee00-4444-4e4e-8f8f-3a3a3a3a3a3a Duration: 15015.33 ms Billed Duration: 15000 ms Memory Size: 512 MB Max Memory Used: 101 MB"
+  },
+  {
+    "name": "TS2532 possibly undefined",
+    "expected_family": "ts-strict-null",
+    "log": "src/pages/Orders.tsx(88,21): error TS2532: Object is possibly 'undefined'.\nsrc/pages/Orders.tsx(91,9): error TS18048: 'order.customer' is possibly 'undefined'.\nFound 2 errors in the same file, starting at: src/pages/Orders.tsx:88"
+  },
+  {
+    "name": "GitHub API secondary rate limit",
+    "expected_family": "github-rate-limit",
+    "log": "Error: You have exceeded a secondary rate limit. Please wait a few minutes before you try again.\n    at /home/runner/work/_actions/acme/label-sync/v1/dist/index.js:812:15\n  status: 403, headers: { 'retry-after': '60', 'x-ratelimit-remaining': '0' }"
+  },
+  {
+    "name": "novel: rust borrow checker",
+    "expected_family": null,
+    "log": "error[E0382]: borrow of moved value: `config`\n  --> src/main.rs:41:20\n   |\n38 |     let server = Server::new(config);\n   |                              ------ value moved here\n41 |     println!(\"{:?}\", config.port);\n   |                    ^^^^^^^^^^^ value borrowed here after move"
+  },
+  {
+    "name": "novel: iOS code signing",
+    "expected_family": null,
+    "log": "error: No profiles for 'com.acme.shopper' were found: Xcode couldn't find any iOS App Development provisioning profiles matching 'com.acme.shopper'. (in target 'Shopper' from project 'Shopper')\n** ARCHIVE FAILED **"
+  },
+  {
+    "name": "novel: gradle dependency not found",
+    "expected_family": null,
+    "log": "FAILURE: Build failed with an exception.\n* What went wrong:\nExecution failed for task ':app:checkDebugAarMetadata'.\n> Could not resolve all files for configuration ':app:debugRuntimeClasspath'.\n   > Could not find com.acme.android:analytics-sdk:3.2.1."
+  },
+  {
+    "name": "novel: utf-8 decode error in CSV",
+    "expected_family": null,
+    "log": "Traceback (most recent call last):\n  File \"/app/importer/parse.py\", line 18, in read_rows\n    for row in csv.DictReader(f):\n  File \"<frozen codecs>\", line 322, in decode\nUnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte"
+  },
+  {
+    "name": "novel: cron script permission denied",
+    "expected_family": null,
+    "log": "/etc/cron.daily/rotate-exports:\n/opt/acme/bin/rotate-exports.sh: line 12: /var/exports/archive/2025-09-01.tar.gz: Permission denied\nrun-parts: /etc/cron.daily/rotate-exports exited with return code 1"
+  }
+]

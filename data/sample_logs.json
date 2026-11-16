@@ -1,5 +1,6 @@
 [
   {
+    "family": "pg-pool-exhaustion",
     "title": "Postgres connection pool exhausted under load",
     "service": "orders-api",
     "error_type": "sqlalchemy.exc.TimeoutError",
@@ -7,9 +8,15 @@
     "root_cause": "Sessions were opened per request but never closed on the error path, so connections leaked until the QueuePool (5 + 10 overflow) was exhausted during peak traffic.",
     "fix": "Wrap session usage in a context manager / FastAPI dependency with try/finally session.close(); raise pool_size to 20 and set pool_pre_ping=True. Added a Grafana alert on pool checked-out connections.",
     "severity": "critical",
-    "tags": ["python", "sqlalchemy", "postgres", "connection-leak"]
+    "tags": [
+      "python",
+      "sqlalchemy",
+      "postgres",
+      "connection-leak"
+    ]
   },
   {
+    "family": "java-npe-missing-address",
     "title": "Java NullPointerException on missing customer address",
     "service": "billing-service",
     "error_type": "java.lang.NullPointerException",
@@ -17,9 +24,14 @@
     "root_cause": "Customers created through the new self-serve signup flow have no billing address; TaxCalculator assumed one always exists.",
     "fix": "Return Optional<Address> from getBillingAddress(), fall back to the shipping address country, and skip tax with a warning when neither exists. Added a DB constraint check in signup.",
     "severity": "high",
-    "tags": ["java", "npe", "billing"]
+    "tags": [
+      "java",
+      "npe",
+      "billing"
+    ]
   },
   {
+    "family": "k8s-oomkilled",
     "title": "Pod OOMKilled after image-processing library upgrade",
     "service": "thumbnailer",
     "error_type": "OOMKilled",
@@ -27,9 +39,15 @@
     "root_cause": "Pillow upgrade decoded full-resolution images eagerly; large uploads exceeded the 512Mi container memory limit and the kernel OOM killer terminated the process (exit 137).",
     "fix": "Use Image.draft()/thumbnail() to downscale during decode, cap input size at 40MP, and raise the memory limit to 1Gi with a matching request.",
     "severity": "high",
-    "tags": ["kubernetes", "oom", "memory", "python"]
+    "tags": [
+      "kubernetes",
+      "oom",
+      "memory",
+      "python"
+    ]
   },
   {
+    "family": "npm-lockfile-drift",
     "title": "npm ci fails: lockfile out of sync with package.json",
     "service": "web-frontend CI",
     "error_type": "npm ERR! code EUSAGE",
@@ -37,9 +55,14 @@
     "root_cause": "A dependency was added to package.json in a PR without committing the regenerated package-lock.json.",
     "fix": "Run `npm install` locally and commit package-lock.json. Added a pre-commit hook and a CI step that runs `npm install --package-lock-only` and fails on diff.",
     "severity": "low",
-    "tags": ["ci", "npm", "github-actions"]
+    "tags": [
+      "ci",
+      "npm",
+      "github-actions"
+    ]
   },
   {
+    "family": "redis-failover-refused",
     "title": "Redis ConnectionError after ElastiCache failover",
     "service": "session-service",
     "error_type": "redis.exceptions.ConnectionError",
@@ -47,9 +70,15 @@
     "root_cause": "The client was configured with the primary node's IP instead of the ElastiCache primary endpoint DNS name; after an automatic failover the old IP stopped accepting connections.",
     "fix": "Use the primary endpoint DNS name, enable retry_on_timeout and health_check_interval=30 in the redis client, and add exponential-backoff retries.",
     "severity": "critical",
-    "tags": ["redis", "aws", "elasticache", "failover"]
+    "tags": [
+      "redis",
+      "aws",
+      "elasticache",
+      "failover"
+    ]
   },
   {
+    "family": "tls-cert-expired",
     "title": "Expired TLS certificate on internal payments gateway",
     "service": "checkout",
     "error_type": "SSLCertVerificationError",
@@ -57,9 +86,14 @@
     "root_cause": "The internal CA-issued certificate on the payments gateway expired; renewal was manual and the reminder went to a deactivated mailbox.",
     "fix": "Renewed the cert and moved issuance to cert-manager with automatic renewal 30 days before expiry. Added a Prometheus blackbox exporter alert on cert expiry < 14 days.",
     "severity": "critical",
-    "tags": ["tls", "certificates", "payments"]
+    "tags": [
+      "tls",
+      "certificates",
+      "payments"
+    ]
   },
   {
+    "family": "node-unhandled-rejection",
     "title": "Node.js unhandled promise rejection crashes worker",
     "service": "notifications-worker",
     "error_type": "UnhandledPromiseRejection",
@@ -67,9 +101,14 @@
     "root_cause": "sendEmail() was called without await inside a forEach loop, so a transient DNS failure for the SMTP host became an unhandled rejection that terminated the Node 20 process.",
     "fix": "Replace forEach with for...of + await (or Promise.allSettled), wrap in try/catch with retry, and register a process-level 'unhandledRejection' logger.",
     "severity": "high",
-    "tags": ["nodejs", "async", "worker"]
+    "tags": [
+      "nodejs",
+      "async",
+      "worker"
+    ]
   },
   {
+    "family": "docker-no-space",
     "title": "Docker build fails: no space left on device in CI runner",
     "service": "platform CI",
     "error_type": "no space left on device",
@@ -77,9 +116,14 @@
     "root_cause": "Self-hosted CI runner never pruned Docker build cache and dangling images; /var/lib/docker filled the 50GB disk.",
     "fix": "Added a nightly `docker system prune -af --filter until=72h` cron, enabled BuildKit cache limits, and alerting on runner disk usage > 80%.",
     "severity": "medium",
-    "tags": ["ci", "docker", "disk"]
+    "tags": [
+      "ci",
+      "docker",
+      "disk"
+    ]
   },
   {
+    "family": "terraform-state-lock",
     "title": "Terraform state lock held by crashed pipeline",
     "service": "infra CI",
     "error_type": "Error acquiring the state lock",
@@ -87,9 +131,14 @@
     "root_cause": "A previous apply job was killed on timeout and never released its DynamoDB state lock.",
     "fix": "Confirm no apply is running, then `terraform force-unlock <LOCK_ID>`. Increased job timeout and added a trap to release the lock on cancellation.",
     "severity": "medium",
-    "tags": ["terraform", "ci", "dynamodb"]
+    "tags": [
+      "terraform",
+      "ci",
+      "dynamodb"
+    ]
   },
   {
+    "family": "kafka-rebalance-storm",
     "title": "Kafka consumer lag from rebalance storm",
     "service": "events-consumer",
     "error_type": "CommitFailedException",
@@ -97,9 +146,14 @@
     "root_cause": "Batch processing per poll() took longer than max.poll.interval.ms (300s) after a slow downstream API, so consumers were repeatedly kicked from the group, causing a rebalance loop and growing lag.",
     "fix": "Reduce max.poll.records from 500 to 100, move the slow API call to an async bounded executor, and raise max.poll.interval.ms to 600000.",
     "severity": "high",
-    "tags": ["kafka", "java", "consumer-lag"]
+    "tags": [
+      "kafka",
+      "java",
+      "consumer-lag"
+    ]
   },
   {
+    "family": "go-nil-map",
     "title": "Go panic: nil map assignment in config loader",
     "service": "edge-proxy",
     "error_type": "panic: assignment to entry in nil map",
@@ -107,9 +161,14 @@
     "root_cause": "Config struct's Headers map was only initialised when the YAML file had a headers block; env-var overrides wrote into the nil map.",
     "fix": "Initialise maps in the constructor (Headers: map[string]string{}) and add a unit test loading a config with no headers block.",
     "severity": "high",
-    "tags": ["go", "panic", "config"]
+    "tags": [
+      "go",
+      "panic",
+      "config"
+    ]
   },
   {
+    "family": "pytest-timezone-flaky",
     "title": "Flaky pytest: test depends on wall-clock time",
     "service": "scheduler CI",
     "error_type": "AssertionError",
@@ -117,9 +176,15 @@
     "root_cause": "Test computed 'tomorrow' using local time while next_run() used UTC; it failed whenever CI ran between 00:00 and the UTC offset.",
     "fix": "Freeze time with freezegun in the test and make both sides use timezone-aware UTC datetimes.",
     "severity": "low",
-    "tags": ["ci", "pytest", "flaky-test", "timezone"]
+    "tags": [
+      "ci",
+      "pytest",
+      "flaky-test",
+      "timezone"
+    ]
   },
   {
+    "family": "s3-kms-access-denied",
     "title": "S3 AccessDenied after IAM role policy change",
     "service": "report-exporter",
     "error_type": "botocore.exceptions.ClientError AccessDenied",
@@ -127,9 +192,15 @@
     "root_cause": "The bucket switched to SSE-KMS with a customer-managed key, but the service role was never granted kms:GenerateDataKey on that key.",
     "fix": "Add kms:GenerateDataKey and kms:Decrypt on the key ARN to the role policy and add the role to the key policy. Added an IAM policy simulator check to the infra PR pipeline.",
     "severity": "high",
-    "tags": ["aws", "s3", "iam", "kms"]
+    "tags": [
+      "aws",
+      "s3",
+      "iam",
+      "kms"
+    ]
   },
   {
+    "family": "pg-migration-deadlock",
     "title": "Database migration deadlock during deploy",
     "service": "accounts-api",
     "error_type": "psycopg2.errors.DeadlockDetected",
@@ -137,9 +208,15 @@
     "root_cause": "Migration created a non-concurrent index on a hot table while live traffic held row locks, producing a lock-order deadlock.",
     "fix": "Use CREATE INDEX CONCURRENTLY in an autocommit migration block, set lock_timeout = '5s', and run schema migrations before rolling out new pods.",
     "severity": "high",
-    "tags": ["postgres", "alembic", "migration", "deadlock"]
+    "tags": [
+      "postgres",
+      "alembic",
+      "migration",
+      "deadlock"
+    ]
   },
   {
+    "family": "lambda-timeout",
     "title": "Lambda timeout calling third-party API without client timeout",
     "service": "webhook-relay",
     "error_type": "Task timed out",
@@ -147,9 +224,14 @@
     "root_cause": "requests.post() had no timeout; when the partner endpoint hung, the function waited until the 30s Lambda limit and the webhook was lost.",
     "fix": "Set timeout=(3, 10) on the HTTP call, push failed deliveries to an SQS DLQ for retry, and alarm on the Lambda Errors metric.",
     "severity": "medium",
-    "tags": ["aws", "lambda", "timeout"]
+    "tags": [
+      "aws",
+      "lambda",
+      "timeout"
+    ]
   },
   {
+    "family": "ts-strict-null",
     "title": "React build fails: TypeScript strict null error after upgrade",
     "service": "web-frontend CI",
     "error_type": "TS2532",
@@ -157,9 +239,14 @@
     "root_cause": "Upgraded API client types made `profile` optional; strictNullChecks flagged unguarded access.",
     "fix": "Use optional chaining with a fallback (`user.profile?.displayName ?? 'Unknown'`) and render a placeholder when profile is missing.",
     "severity": "low",
-    "tags": ["ci", "typescript", "react"]
+    "tags": [
+      "ci",
+      "typescript",
+      "react"
+    ]
   },
   {
+    "family": "github-rate-limit",
     "title": "Rate limited by GitHub API in release pipeline",
     "service": "release CI",
     "error_type": "HTTP 403 rate limit exceeded",
@@ -167,9 +254,14 @@
     "root_cause": "Changelog action issued one REST call per PR (214 calls) plus retries, exhausting the installation's hourly quota.",
     "fix": "Switch to a single GraphQL query with pagination, cache results between steps, and honour x-ratelimit-reset with backoff.",
     "severity": "low",
-    "tags": ["ci", "github", "rate-limit"]
+    "tags": [
+      "ci",
+      "github",
+      "rate-limit"
+    ]
   },
   {
+    "family": "celery-visibility-timeout",
     "title": "Celery tasks stuck: broker visibility timeout too short",
     "service": "video-transcoder",
     "error_type": "Duplicate task execution",
@@ -177,9 +269,15 @@
     "root_cause": "Transcodes took longer than the Redis broker's 1h visibility_timeout, so unacknowledged tasks were redelivered to another worker and ran twice.",
     "fix": "Raise broker_transport_options visibility_timeout to 6h, use acks_late with idempotent upserts, and split long transcodes into chunks.",
     "severity": "medium",
-    "tags": ["python", "celery", "redis", "idempotency"]
+    "tags": [
+      "python",
+      "celery",
+      "redis",
+      "idempotency"
+    ]
   },
   {
+    "family": "pg-wal-disk-full",
     "title": "Disk full on Postgres primary from WAL retention",
     "service": "primary-db",
     "error_type": "PANIC: could not write to file pg_wal",
@@ -187,9 +285,15 @@
     "root_cause": "An abandoned logical replication slot from a decommissioned analytics consumer kept WAL from being recycled until the volume filled.",
     "fix": "Drop the inactive slot (pg_drop_replication_slot), set max_slot_wal_keep_size = 50GB, expand the volume, and alert on pg_replication_slots where active = false.",
     "severity": "critical",
-    "tags": ["postgres", "wal", "disk", "replication"]
+    "tags": [
+      "postgres",
+      "wal",
+      "disk",
+      "replication"
+    ]
   },
   {
+    "family": "k8s-liveness-slow-start",
     "title": "Health check flapping: liveness probe too aggressive on JVM startup",
     "service": "catalog-service",
     "error_type": "Liveness probe failed",
@@ -197,6 +301,11 @@
     "root_cause": "Spring Boot took ~70s to start after adding a cache warm-up, but the liveness probe started at 30s with 3 failures allowed, so Kubernetes killed the pod before it was ready.",
     "fix": "Add a startupProbe (failureThreshold 30, periodSeconds 5) so liveness only begins after startup; point liveness at /actuator/health/liveness.",
     "severity": "medium",
-    "tags": ["kubernetes", "java", "spring", "probes"]
+    "tags": [
+      "kubernetes",
+      "java",
+      "spring",
+      "probes"
+    ]
   }
 ]

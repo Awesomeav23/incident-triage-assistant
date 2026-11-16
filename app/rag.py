@@ -1,4 +1,4 @@
-"""Embedding generation (fastembed, local ONNX) and pgvector similarity search."""
+"""Embeddings (fastembed, local ONNX) and incident search: vector, keyword, or hybrid."""
 
 import re
 from contextlib import contextmanager
@@ -30,7 +30,19 @@ CREATE TABLE IF NOT EXISTS incidents (
 );
 CREATE INDEX IF NOT EXISTS incidents_embedding_hnsw
     ON incidents USING hnsw (embedding vector_cosine_ops);
+
+-- Phase 2: family label, synthetic flag, keyword search
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS family TEXT;
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS synthetic BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS search_text TEXT NOT NULL DEFAULT '';
+ALTER TABLE incidents ADD COLUMN IF NOT EXISTS search_tsv tsvector
+    GENERATED ALWAYS AS (to_tsvector('simple', search_text)) STORED;
+CREATE INDEX IF NOT EXISTS incidents_search_gin ON incidents USING gin (search_tsv);
 """
+
+RRF_K = 60  # standard reciprocal-rank-fusion constant
+CANDIDATES = 20  # depth taken from each ranker before fusion
+SEARCH_MODES = ("vector", "keyword", "hybrid")
 
 # ---------- log normalisation ----------
 # Strip run-specific noise so two occurrences of the same bug embed close together.
@@ -53,6 +65,31 @@ def normalize_log(text: str) -> str:
     if sum(len(ln) for ln in lines) > MAX_EMBED_CHARS and len(lines) > 30:
         lines = lines[:20] + ["..."] + lines[-10:]
     return "\n".join(lines)[:MAX_EMBED_CHARS]
+
+
+# ---------- keyword tokens ----------
+# The same tokenizer builds the stored search_text and the query, so both sides match.
+_TOKEN = re.compile(r"[a-z][a-z0-9]{2,}|\b\d{3,4}\b")
+_STOP = frozenset("""
+the and for with from not this that was are has have had but its into via per
+error errors line file most recent call last traceback exception raise raised
+self none true false null true info warn warning debug ago over
+""".split())
+MAX_QUERY_TOKENS = 64
+
+
+def tokens(text: str) -> list[str]:
+    seen: dict[str, None] = {}
+    for tok in _TOKEN.findall(normalize_log(text).lower()):
+        if tok not in _STOP:
+            seen.setdefault(tok)
+    return list(seen)
+
+
+def keyword_query(text: str) -> str | None:
+    """OR-query of distinctive tokens; tokens are [a-z0-9] only, so safe for to_tsquery."""
+    toks = tokens(text)[:MAX_QUERY_TOKENS]
+    return " | ".join(toks) if toks else None
 
 
 # ---------- embeddings ----------
@@ -105,25 +142,75 @@ class IncidentStore:
             self._pool.putconn(c)
 
     def add(self, inc: IncidentIn, embedding: np.ndarray) -> int:
+        search_text = " ".join(tokens(f"{inc.title}\n{inc.error_type}\n{inc.log_text}"))
         with self.conn() as c, c.cursor() as cur:
             cur.execute(
                 """INSERT INTO incidents
-                   (title, service, error_type, log_text, root_cause, fix, severity, tags, embedding)
-                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
+                   (title, service, error_type, log_text, root_cause, fix, severity, tags,
+                    family, synthetic, search_text, embedding)
+                   VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s) RETURNING id""",
                 (inc.title, inc.service, inc.error_type, inc.log_text, inc.root_cause,
-                 inc.fix, inc.severity.value, inc.tags, embedding),
+                 inc.fix, inc.severity.value, inc.tags, inc.family, inc.synthetic,
+                 search_text, embedding),
             )
             return cur.fetchone()[0]
 
-    def search(self, embedding: np.ndarray, top_k: int) -> list[SimilarIncident]:
+    _COLUMNS = "i.id, i.title, i.service, i.error_type, i.root_cause, i.fix, i.severity, i.family"
+
+    def search(
+        self,
+        embedding: np.ndarray,
+        top_k: int,
+        mode: str = "vector",
+        query_text: str | None = None,
+        min_similarity: float = 0.0,
+    ) -> list[SimilarIncident]:
+        """Top-k incidents. `similarity` is always cosine similarity, whatever the ranking.
+
+        vector  - pgvector cosine distance
+        keyword - Postgres full-text (ts_rank over an OR-query of log tokens)
+        hybrid  - reciprocal rank fusion of both: score = sum(1 / (RRF_K + rank))
+        Results with cosine similarity below min_similarity are dropped.
+        """
+        if mode not in SEARCH_MODES:
+            raise ValueError(f"mode must be one of {SEARCH_MODES}")
+        tsq = keyword_query(query_text) if query_text and mode != "vector" else None
+        if mode == "keyword" and tsq is None:
+            return []
+
+        if mode == "vector" or tsq is None:
+            sql = f"""SELECT {self._COLUMNS}, 1 - (i.embedding <=> %(q)s) AS similarity,
+                             1 - (i.embedding <=> %(q)s) AS score
+                      FROM incidents i ORDER BY i.embedding <=> %(q)s LIMIT %(k)s"""
+        elif mode == "keyword":
+            sql = f"""SELECT {self._COLUMNS}, 1 - (i.embedding <=> %(q)s) AS similarity,
+                             ts_rank(i.search_tsv, to_tsquery('simple', %(tsq)s)) AS score
+                      FROM incidents i
+                      WHERE i.search_tsv @@ to_tsquery('simple', %(tsq)s)
+                      ORDER BY score DESC, i.id LIMIT %(k)s"""
+        else:  # hybrid
+            sql = f"""
+                WITH vec AS (
+                    SELECT id, row_number() OVER (ORDER BY embedding <=> %(q)s) AS r
+                    FROM incidents ORDER BY embedding <=> %(q)s LIMIT %(n)s
+                ), kw AS (
+                    SELECT id, row_number() OVER (
+                        ORDER BY ts_rank(search_tsv, to_tsquery('simple', %(tsq)s)) DESC, id) AS r
+                    FROM incidents WHERE search_tsv @@ to_tsquery('simple', %(tsq)s)
+                    ORDER BY r LIMIT %(n)s
+                ), fused AS (
+                    SELECT id, sum(1.0 / (%(rrf)s + r)) AS score
+                    FROM (SELECT * FROM vec UNION ALL SELECT * FROM kw) u GROUP BY id
+                )
+                SELECT {self._COLUMNS}, 1 - (i.embedding <=> %(q)s) AS similarity, f.score
+                FROM fused f JOIN incidents i USING (id)
+                ORDER BY f.score DESC, similarity DESC LIMIT %(k)s"""
+
+        params = {"q": embedding, "k": top_k, "tsq": tsq, "n": CANDIDATES, "rrf": RRF_K}
         with self.conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
-            cur.execute(
-                """SELECT id, title, service, error_type, root_cause, fix, severity,
-                          1 - (embedding <=> %s) AS similarity
-                   FROM incidents ORDER BY embedding <=> %s LIMIT %s""",
-                (embedding, embedding, top_k),
-            )
-            return [SimilarIncident(**row) for row in cur.fetchall()]
+            cur.execute(sql, params)
+            rows = cur.fetchall()
+        return [SimilarIncident(**r) for r in rows if r["similarity"] >= min_similarity]
 
     def count(self) -> int:
         with self.conn() as c, c.cursor() as cur:

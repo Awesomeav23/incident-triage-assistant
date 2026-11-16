@@ -1,7 +1,7 @@
 """Load past incidents from JSON into Postgres.
 
-    python -m scripts.seed                      # data/sample_logs.json
-    python -m scripts.seed --reset --file data/incidents_expanded.json
+    python -m scripts.seed --reset              # data/incidents_expanded.json (235)
+    python -m scripts.seed --file data/sample_logs.json   # just the 20 base incidents
 """
 
 import argparse
@@ -14,7 +14,7 @@ from app.rag import IncidentStore, get_embedder
 
 def main() -> None:
     p = argparse.ArgumentParser()
-    p.add_argument("--file", default="data/sample_logs.json")
+    p.add_argument("--file", default="data/incidents_expanded.json")
     p.add_argument("--reset", action="store_true", help="delete existing incidents first")
     args = p.parse_args()
 

@@ -15,6 +15,11 @@ class Settings:
     embed_model: str = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
     embed_dim: int = int(os.getenv("EMBED_DIM", "384"))
     top_k: int = int(os.getenv("TOP_K", "3"))
+    # hybrid beat vector-only in the Phase 2 eval (hit@1 0.936 vs 0.894)
+    search_mode: str = os.getenv("SEARCH_MODE", "hybrid")  # vector | keyword | hybrid
+    # Below this cosine similarity a match is dropped ("no close match"). 0.73 = highest
+    # cutoff that kept every correct match in the Phase 2 eval (results/retrieval_*.json).
+    min_similarity: float = float(os.getenv("MIN_SIMILARITY", "0.73"))
     # CloudWatch metrics (pointed at the local Moto emulator by default)
     metrics_enabled: bool = os.getenv("METRICS_ENABLED", "false").lower() == "true"
     aws_endpoint_url: str | None = os.getenv("AWS_ENDPOINT_URL")

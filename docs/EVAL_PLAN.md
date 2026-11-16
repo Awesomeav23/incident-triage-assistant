@@ -10,9 +10,13 @@ number comes from a script in `scripts/` and is saved to `results/`.
 
 | File | Contents | Used for |
 |---|---|---|
-| `data/sample_logs.json` | 20 hand-written resolved incidents | Index (Phase 1) |
-| `data/incidents_expanded.json` | 200+ incidents, ~40 error families, synthetic variants flagged `synthetic: true` | Index (Phase 2+) |
-| `data/eval_queries.json` | Held-out logs **never indexed**, each with `expected_title` (or `null` = no real match) | All evals |
+| `data/sample_logs.json` | 20 hand-written base incidents | Source |
+| `data/families_extra.json` | 27 hand-written base incidents, each with a held-out log | Source |
+| `data/eval_queries.json` | 15 hand-written held-out logs | Source |
+| `data/incidents_expanded.json` | 235 incidents: 47 families × (1 base + 4 synthetic recurrences, `synthetic: true`) | Index (Phase 2+) |
+| `data/eval_set.json` | 53 held-out logs **never indexed**, each with `expected_family` (or `null` = no real match) | All evals |
+
+All incidents are fictional. `scripts/expand_dataset.py` builds the last two files deterministically.
 
 Rules:
 - Eval logs are new occurrences of known bugs: different service names, hosts, values and line numbers, not copies.
@@ -25,9 +29,9 @@ Rules:
 
 | Metric | Definition |
 |---|---|
-| hit@1 | Share of matchable queries whose expected incident is ranked 1st |
+| hit@1 | Share of matchable queries whose top result is from the expected **family** (any recurrence counts) |
 | hit@3 | … in the top 3 |
-| MRR | Mean of 1/rank of the expected incident (0 if not in top 10) |
+| MRR | Mean of 1/rank of the first result from the expected family (0 if not in top 10) |
 | No-match precision (Phase 2+) | Share of no-match queries where every result is below `MIN_SIMILARITY` |
 | Similarity gap | Mean top-1 similarity for matchable vs no-match queries (tells us where to set the threshold) |
 | Latency | Embed and search p50 / p95 (ms), warm, after one warm-up call |

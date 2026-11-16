@@ -34,6 +34,8 @@ class IncidentIn(BaseModel):
     fix: str
     severity: Severity
     tags: list[str] = []
+    family: str | None = Field(None, description="Groups recurrences of the same failure")
+    synthetic: bool = False
 
 
 class IndexedIncident(BaseModel):
@@ -58,7 +60,9 @@ class SimilarIncident(BaseModel):
     root_cause: str
     fix: str
     severity: Severity
+    family: str | None = None
     similarity: float = Field(..., description="Cosine similarity, 0..1")
+    score: float = Field(..., description="Ranking score for the search mode used")
 
 
 class LLMTriage(BaseModel):
@@ -78,6 +82,10 @@ class LLMTriage(BaseModel):
 class TriageResponse(LLMTriage):
     severity_score: int = Field(..., ge=1, le=5)
     similar_incidents: list[SimilarIncident]
+    no_close_match: bool = Field(
+        ..., description="True when no past incident cleared the similarity threshold"
+    )
+    search_mode: str
     latency_ms: dict[str, float] = Field(
         ..., description="embed / search / llm / total timings"
     )

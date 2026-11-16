@@ -24,7 +24,13 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-004 — Hybrid retrieval with reciprocal rank fusion (Phase 2)
 - **Decision:** run vector search and Postgres full-text search, then merge the rankings with RRF (`score = Σ 1/(60 + rank)`).
 - **Why:** embeddings capture meaning ("connection refused after failover"); keywords catch exact tokens embeddings blur (`EUSAGE`, `TS2532`, `exit code 137`). RRF needs no score calibration between the two.
-- **Validation:** kept only if the eval shows hybrid ≥ vector-only on hit@1/hit@3. Otherwise vector-only stays the default and the result is documented.
+- **Validation:** kept only if the eval shows hybrid ≥ vector-only on hit@1/hit@3.
+- **Result (Phase 2):** hybrid hit@1 0.936 vs vector 0.894 vs keyword 0.872 on 53 held-out logs; hybrid is the default (`SEARCH_MODE`).
+- **Detail:** keyword search runs over `search_text`, built with the same tokenizer as the query (normalised, lower-cased alphanumeric tokens, small stop-word list), so stored and query tokens match. Postgres `ts_rank` has no IDF weighting, which is why keyword alone is weakest.
+
+### ADR-004b — No-match cutoff favours keeping correct matches
+- **Decision:** `MIN_SIMILARITY` = the highest cutoff that keeps every correct match in the eval (0.73).
+- **Why:** a wrongly dropped match removes useful context; a wrongly kept one is still filtered by Claude's "only cite genuine matches" rule. The two similarity ranges overlap, so no cutoff is perfect.
 
 ### ADR-005 — Claude API direct, Claude Opus 5.5 at low effort
 - **Decision:** the `anthropic` Python SDK, model `claude-opus-5-5`, `effort: low`, configurable via env.

@@ -1,77 +1,77 @@
 [
   {
     "name": "pool exhaustion, different service and pool size",
-    "expected_title": "Postgres connection pool exhausted under load",
-    "log": "2025-06-12T19:44:01Z ERROR inventory-api GET /stock/sku-881 failed\nTraceback (most recent call last):\n  File \"/srv/inventory/handlers.py\", line 77, in get_stock\n    row = db.execute(stmt).first()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 171, in _do_get\n    raise exc.TimeoutError(\nsqlalchemy.exc.TimeoutError: QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00"
+    "log": "2025-06-12T19:44:01Z ERROR inventory-api GET /stock/sku-881 failed\nTraceback (most recent call last):\n  File \"/srv/inventory/handlers.py\", line 77, in get_stock\n    row = db.execute(stmt).first()\n  File \"/usr/local/lib/python3.12/site-packages/sqlalchemy/pool/impl.py\", line 171, in _do_get\n    raise exc.TimeoutError(\nsqlalchemy.exc.TimeoutError: QueuePool limit of size 10 overflow 5 reached, connection timed out, timeout 30.00",
+    "expected_family": "pg-pool-exhaustion"
   },
   {
     "name": "NPE on null address, different getter",
-    "expected_title": "Java NullPointerException on missing customer address",
-    "log": "2025-07-01 14:02:55.901 ERROR [billing-service,a91c] c.a.billing.ShippingQuote - quote failed\njava.lang.NullPointerException: Cannot invoke \"com.acme.model.Address.getPostalCode()\" because the return value of \"com.acme.model.Customer.getBillingAddress()\" is null\n\tat com.acme.billing.TaxCalculator.zoneFor(TaxCalculator.java:81)\n\tat com.acme.billing.ShippingQuote.compute(ShippingQuote.java:45)"
+    "log": "2025-07-01 14:02:55.901 ERROR [billing-service,a91c] c.a.billing.ShippingQuote - quote failed\njava.lang.NullPointerException: Cannot invoke \"com.acme.model.Address.getPostalCode()\" because the return value of \"com.acme.model.Customer.getBillingAddress()\" is null\n\tat com.acme.billing.TaxCalculator.zoneFor(TaxCalculator.java:81)\n\tat com.acme.billing.ShippingQuote.compute(ShippingQuote.java:45)",
+    "expected_family": "java-npe-missing-address"
   },
   {
     "name": "OOMKilled, different pod",
-    "expected_title": "Pod OOMKilled after image-processing library upgrade",
-    "log": "Name: pdf-renderer-7c4b9d8f6-qq9zt\nState: Waiting\n  Reason: CrashLoopBackOff\nLast State: Terminated\n  Reason: OOMKilled\n  Exit Code: 137\nRestart Count: 12\nLimits:\n  memory: 256Mi\nEvents:\n  Warning BackOff kubelet Back-off restarting failed container pdf-renderer"
+    "log": "Name: pdf-renderer-7c4b9d8f6-qq9zt\nState: Waiting\n  Reason: CrashLoopBackOff\nLast State: Terminated\n  Reason: OOMKilled\n  Exit Code: 137\nRestart Count: 12\nLimits:\n  memory: 256Mi\nEvents:\n  Warning BackOff kubelet Back-off restarting failed container pdf-renderer",
+    "expected_family": "k8s-oomkilled"
   },
   {
     "name": "npm ci lockfile drift, different package",
-    "expected_title": "npm ci fails: lockfile out of sync with package.json",
-    "log": "Run npm ci\nnpm ERR! code EUSAGE\nnpm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm ERR! Invalid: lock file's zod@3.22.0 does not satisfy zod@3.23.8\nError: Process completed with exit code 1."
+    "log": "Run npm ci\nnpm ERR! code EUSAGE\nnpm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm ERR! Invalid: lock file's zod@3.22.0 does not satisfy zod@3.23.8\nError: Process completed with exit code 1.",
+    "expected_family": "npm-lockfile-drift"
   },
   {
     "name": "redis refused, different host",
-    "expected_title": "Redis ConnectionError after ElastiCache failover",
-    "log": "2025-08-09T07:21:33Z ERROR rate-limiter\nTraceback (most recent call last):\n  File \"/app/limiter/bucket.py\", line 52, in take\n    count = self.redis.incr(key)\n  File \"/usr/local/lib/python3.12/site-packages/redis/connection.py\", line 707, in connect\n    raise ConnectionError(self._error_message(e))\nredis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused."
+    "log": "2025-08-09T07:21:33Z ERROR rate-limiter\nTraceback (most recent call last):\n  File \"/app/limiter/bucket.py\", line 52, in take\n    count = self.redis.incr(key)\n  File \"/usr/local/lib/python3.12/site-packages/redis/connection.py\", line 707, in connect\n    raise ConnectionError(self._error_message(e))\nredis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused.",
+    "expected_family": "redis-failover-refused"
   },
   {
     "name": "expired cert via httpx",
-    "expected_title": "Expired TLS certificate on internal payments gateway",
-    "log": "2025-09-30T23:59:58Z ERROR ledger-sync upstream call failed\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)\n  url=https://ledger.internal.acme.io/v1/entries"
+    "log": "2025-09-30T23:59:58Z ERROR ledger-sync upstream call failed\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)\n  url=https://ledger.internal.acme.io/v1/entries",
+    "expected_family": "tls-cert-expired"
   },
   {
     "name": "unhandled rejection, ECONNRESET",
-    "expected_title": "Node.js unhandled promise rejection crashes worker",
-    "log": "node:internal/process/promises:289\n            triggerUncaughtException(err, true /* fromPromise */);\n            ^\n\n[UnhandledPromiseRejection: This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). The promise rejected with the reason \"Error: read ECONNRESET\".] {\n  code: 'ERR_UNHANDLED_REJECTION'\n}\nNode.js v20.14.0"
+    "log": "node:internal/process/promises:289\n            triggerUncaughtException(err, true /* fromPromise */);\n            ^\n\n[UnhandledPromiseRejection: This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). The promise rejected with the reason \"Error: read ECONNRESET\".] {\n  code: 'ERR_UNHANDLED_REJECTION'\n}\nNode.js v20.14.0",
+    "expected_family": "node-unhandled-rejection"
   },
   {
     "name": "terraform lock, different state path",
-    "expected_title": "Terraform state lock held by crashed pipeline",
-    "log": "Error: Error acquiring the state lock\n\nError message: ConditionalCheckFailedException: The conditional request failed\nLock Info:\n  ID:        e0c1d2f3-0000-4aaa-bbbb-123456789abc\n  Path:      acme-tf-state/staging/eks.tfstate\n  Operation: OperationTypePlan\n  Who:       runner@ip-10-0-2-40\n  Version:   1.8.1\n  Created:   2025-10-02 04:10:55 UTC"
+    "log": "Error: Error acquiring the state lock\n\nError message: ConditionalCheckFailedException: The conditional request failed\nLock Info:\n  ID:        e0c1d2f3-0000-4aaa-bbbb-123456789abc\n  Path:      acme-tf-state/staging/eks.tfstate\n  Operation: OperationTypePlan\n  Who:       runner@ip-10-0-2-40\n  Version:   1.8.1\n  Created:   2025-10-02 04:10:55 UTC",
+    "expected_family": "terraform-state-lock"
   },
   {
     "name": "kafka max.poll.interval exceeded",
-    "expected_title": "Kafka consumer lag from rebalance storm",
-    "log": "2025-05-14 09:12:00,101 WARN  o.a.k.c.c.i.ConsumerCoordinator - [Consumer clientId=audit-consumer-1, groupId=audit] Offset commit failed on partition audit-2 at offset 44120\norg.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms"
+    "log": "2025-05-14 09:12:00,101 WARN  o.a.k.c.c.i.ConsumerCoordinator - [Consumer clientId=audit-consumer-1, groupId=audit] Offset commit failed on partition audit-2 at offset 44120\norg.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms",
+    "expected_family": "kafka-rebalance-storm"
   },
   {
     "name": "go nil map, different package",
-    "expected_title": "Go panic: nil map assignment in config loader",
-    "log": "panic: assignment to entry in nil map\n\ngoroutine 1 [running]:\ngithub.com/acme/auth-gw/internal/settings.(*Settings).mergeEnv(0xc000124000)\n\t/src/internal/settings/settings.go:63 +0x11c\nmain.main()\n\t/src/cmd/auth-gw/main.go:22 +0x51\nexit status 2"
+    "log": "panic: assignment to entry in nil map\n\ngoroutine 1 [running]:\ngithub.com/acme/auth-gw/internal/settings.(*Settings).mergeEnv(0xc000124000)\n\t/src/internal/settings/settings.go:63 +0x11c\nmain.main()\n\t/src/cmd/auth-gw/main.go:22 +0x51\nexit status 2",
+    "expected_family": "go-nil-map"
   },
   {
     "name": "S3 KMS access denied on GetObject",
-    "expected_title": "S3 AccessDenied after IAM role policy change",
-    "log": "botocore.exceptions.ClientError: An error occurred (AccessDenied) when calling the GetObject operation: User: arn:aws:sts::123456789012:assumed-role/etl-reader/i-0def is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:us-west-2:123456789012:key/9z8y"
+    "log": "botocore.exceptions.ClientError: An error occurred (AccessDenied) when calling the GetObject operation: User: arn:aws:sts::123456789012:assumed-role/etl-reader/i-0def is not authorized to perform: kms:Decrypt on resource: arn:aws:kms:us-west-2:123456789012:key/9z8y",
+    "expected_family": "s3-kms-access-denied"
   },
   {
     "name": "WAL disk full",
-    "expected_title": "Disk full on Postgres primary from WAL retention",
-    "log": "2025-11-02 13:40:12.551 UTC [1] PANIC:  could not write to file \"pg_wal/xlogtemp.9981\": No space left on device\n2025-11-02 13:40:12.553 UTC [1] LOG:  server process (PID 9981) was terminated by signal 6: Aborted\n2025-11-02 13:40:13.010 UTC [1] LOG:  database system is shut down"
+    "log": "2025-11-02 13:40:12.551 UTC [1] PANIC:  could not write to file \"pg_wal/xlogtemp.9981\": No space left on device\n2025-11-02 13:40:12.553 UTC [1] LOG:  server process (PID 9981) was terminated by signal 6: Aborted\n2025-11-02 13:40:13.010 UTC [1] LOG:  database system is shut down",
+    "expected_family": "pg-wal-disk-full"
   },
   {
     "name": "liveness probe on slow start",
-    "expected_title": "Health check flapping: liveness probe too aggressive on JVM startup",
-    "log": "Warning  Unhealthy  90s (x6 over 3m)  kubelet  Liveness probe failed: Get \"http://10.1.9.3:8080/actuator/health\": dial tcp 10.1.9.3:8080: connect: connection refused\nNormal   Killing    90s (x2 over 3m)  kubelet  Container search-service failed liveness probe, will be restarted"
+    "log": "Warning  Unhealthy  90s (x6 over 3m)  kubelet  Liveness probe failed: Get \"http://10.1.9.3:8080/actuator/health\": dial tcp 10.1.9.3:8080: connect: connection refused\nNormal   Killing    90s (x2 over 3m)  kubelet  Container search-service failed liveness probe, will be restarted",
+    "expected_family": "k8s-liveness-slow-start"
   },
   {
     "name": "celery redelivery duplicate",
-    "expected_title": "Celery tasks stuck: broker visibility timeout too short",
-    "log": "[2025-04-20 02:30:10,002: WARNING/MainProcess] Received task export_csv[aa71] (redelivered=True)\n[2025-04-20 02:30:10,004: ERROR/ForkPoolWorker-2] Task export_csv[aa71] raised unexpected: IntegrityError('duplicate key value violates unique constraint \"exports_job_id_key\"')"
+    "log": "[2025-04-20 02:30:10,002: WARNING/MainProcess] Received task export_csv[aa71] (redelivered=True)\n[2025-04-20 02:30:10,004: ERROR/ForkPoolWorker-2] Task export_csv[aa71] raised unexpected: IntegrityError('duplicate key value violates unique constraint \"exports_job_id_key\"')",
+    "expected_family": "celery-visibility-timeout"
   },
   {
     "name": "novel: segfault in native extension (no good match)",
-    "expected_title": null,
-    "log": "Fatal Python error: Segmentation fault\n\nCurrent thread 0x00007f2a1b3c4740 (most recent call first):\n  File \"/usr/local/lib/python3.12/site-packages/numpy/core/_methods.py\", line 49 in _sum\n  File \"/app/features/vectorize.py\", line 118 in build_matrix\nExtension modules: numpy.core._multiarray_umath, scipy.sparse._sparsetools (total: 12)\nSegmentation fault (core dumped)"
+    "log": "Fatal Python error: Segmentation fault\n\nCurrent thread 0x00007f2a1b3c4740 (most recent call first):\n  File \"/usr/local/lib/python3.12/site-packages/numpy/core/_methods.py\", line 49 in _sum\n  File \"/app/features/vectorize.py\", line 118 in build_matrix\nExtension modules: numpy.core._multiarray_umath, scipy.sparse._sparsetools (total: 12)\nSegmentation fault (core dumped)",
+    "expected_family": null
   }
 ]

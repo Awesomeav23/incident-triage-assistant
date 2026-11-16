@@ -56,7 +56,10 @@ def triage(
     t0 = time.perf_counter()
     vec = embedder.embed(req.log)
     t1 = time.perf_counter()
-    similar = store.search(vec, req.top_k)
+    similar = store.search(
+        vec, req.top_k, mode=settings.search_mode, query_text=req.log,
+        min_similarity=settings.min_similarity,
+    )
     t2 = time.perf_counter()
     try:
         result = triager.triage(req.log, similar)
@@ -80,6 +83,8 @@ def triage(
         **result.model_dump(),
         severity_score=score,
         similar_incidents=similar,
+        no_close_match=not similar,
+        search_mode=settings.search_mode,
         latency_ms=latency,
         model=triager.model,
     )

@@ -36,22 +36,29 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 2 — Bigger dataset + hybrid search ⬜
+## Phase 2 — Bigger dataset + hybrid search ✅
 **Goal:** 200+ incident patterns and measurably better retrieval. **Covers:** FR-4, FR-5.
 
 **Tasks**
-- [ ] `scripts/expand_dataset.py` — ~40 error families × variants (different services, frameworks, line numbers, values) → `data/incidents_expanded.json`; each record tagged `synthetic: true`
-- [ ] Families added: Python, Java/Spring, Go, Node/TS, Kubernetes, Docker, Terraform, GitHub Actions, AWS (IAM/S3/Lambda/DynamoDB), Postgres/MySQL/Redis/Kafka, TLS/DNS/network
-- [ ] Expand the eval set to ~50 held-out logs (families present + 5–8 "no match")
-- [ ] Schema: generated `search_tsv` column + GIN index
-- [ ] `IncidentStore.search(mode=vector|keyword|hybrid)` with RRF (ADR-004)
-- [ ] `MIN_SIMILARITY` threshold, tuned on the eval set
-- [ ] Eval `--mode` flag → comparison table in `results/retrieval_modes.json`
+- [x] `family` label on every incident; 27 new hand-written families in `data/families_extra.json`, deliberately close to existing ones (pool exhaustion vs too-many-clients vs statement timeout; OOMKilled vs Java heap vs Node heap vs Celery SIGKILL vs Lambda OOM; KMS deny vs bucket-policy deny; nil map vs nil pointer vs concurrent map writes …)
+- [x] `scripts/expand_dataset.py` — 47 families × 5 (1 base + 4 synthetic recurrences: different service, file paths, line numbers, hosts, versions, values) → `data/incidents_expanded.json` (235 incidents, 188 flagged `synthetic: true`); deterministic seed
+- [x] Eval set → `data/eval_set.json`: 53 held-out logs (47 matchable, one or more per family; 6 no-match). Held-out logs are written differently from the indexed ones (often another language or client library); a leakage check asserts none is identical to an indexed log
+- [x] Schema: `family`, `synthetic`, `search_text` (normalised tokens) + generated `search_tsv` + GIN index
+- [x] `IncidentStore.search(mode=vector|keyword|hybrid, min_similarity=…)` with RRF (ADR-004)
+- [x] `MIN_SIMILARITY` = 0.73; `SEARCH_MODE` = hybrid; `/triage` returns `no_close_match` and `search_mode`
+- [x] Eval compares all modes, lists misses, and reports the threshold curve → `results/retrieval_<date>.json`
 
-**Acceptance criteria**
-- ≥ 200 incidents indexed
-- Table of hit@1 / hit@3 / MRR / no-match precision for all three modes
-- Default mode = best measured; decision noted in ADR-004
+**Result (2026-11-16)** — 235 indexed, 53 queries:
+
+| Mode | hit@1 | hit@3 | MRR | search p95 |
+|---|---|---|---|---|
+| vector | 0.894 | 0.936 | 0.915 | 3.7 ms |
+| keyword | 0.872 | 0.936 | 0.904 | 5.0 ms |
+| **hybrid** | **0.936** | **0.957** | **0.950** | 4.7 ms |
+
+- Embed p95 21.7 ms → retrieval total well under the 200 ms target.
+- Misses (hybrid): Redis timeout logged by a Java client (rank 6), missing config in a Node app (rank 2), missing Node base image (not in top 10). All three are cross-language holdouts.
+- No-match cutoff 0.73 keeps 100% of correct matches and rejects 4/6 no-match logs. The similarity ranges overlap (no-match 0.67–0.78, correct ≥ 0.73), so similarity alone can't fully separate them; Claude's "only cite genuine matches" rule is the second check, measured in Phase 5. Tuned on the eval set itself with only 6 no-match logs, so it's a starting point.
 
 ---
 
