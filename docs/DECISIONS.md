@@ -29,7 +29,7 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-005 — Claude API direct, Claude Opus 5.5 at low effort
 - **Decision:** the `anthropic` Python SDK, model `claude-opus-5-5`, `effort: low`, configurable via env.
 - **Why:** triage quality depends on reasoning over unfamiliar stack traces; Opus is the strongest default. `low` effort trims thinking time for latency.
-- **Risk:** the <2 s target may not hold with Opus. Phase 4 measures accuracy *and* latency for the configured model, and the README reports what was measured. Switching model is one env var, and the eval re-measures quality.
+- **Risk:** the <2 s target may not hold with Opus. Phase 5 measures accuracy *and* latency for the configured model, and the README reports what was measured. Switching model is one env var, and the eval re-measures quality.
 - **Alternative:** Amazon Bedrock, deferred (optional `LLM_PROVIDER=bedrock` switch).
 
 ### ADR-006 — Structured outputs instead of parsing text
@@ -51,7 +51,7 @@ Short ADRs: what was chosen, why, and what it costs.
 - **Why:** zero cost and no credentials; the application code is the same as for real AWS.
 - **Cost:** Moto doesn't execute the Lambda from a real S3 notification here. A script calls the handler with a real-shaped S3 event instead. A real-AWS deploy is an optional extra.
 
-### ADR-010 — Fingerprint dedup instead of semantic dedup (Phase 5)
+### ADR-010 — Fingerprint dedup instead of semantic dedup (Phase 6)
 - **Decision:** dedup on SHA-256 of the normalised log within a time window.
 - **Why:** exact and cheap, with no false merges. Near-duplicates still go through retrieval and are matched there.
 - **Alternative:** vector-similarity clustering. More recall, but risk of merging different bugs. Revisit if the replay shows many near-misses.
@@ -59,3 +59,9 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-011 — Tests run without an API key
 - **Decision:** FastAPI dependency overrides inject a fake embedder, store and LLM for unit tests. DB-backed tests use a separate `triage_test` database. Live LLM tests are skipped unless `ANTHROPIC_API_KEY` is set.
 - **Why:** CI must be free, fast and deterministic.
+
+### ADR-012 — React + Vite + TypeScript + Tailwind for the web UI (Phase 4)
+- **Decision:** a separate `frontend/` app; Vite proxies `/api` in dev, nginx serves the build and proxies `/api` in Docker.
+- **Why:** lets people try the system without curl, and makes the AI's behaviour visible (matches, similarity, confidence, "no close match"). TypeScript types mirror the Pydantic schemas, so API drift shows up as compile errors.
+- **Alternatives:** plain HTML served by FastAPI (simplest, but gets messy past one page); Streamlit (fast, but a separate Python app that looks like a notebook demo).
+- **Cost:** a Node toolchain and a second container; about one day of work.

@@ -3,7 +3,7 @@
 Paste a stack trace or failed CI log → get a plain-English root cause, severity, and
 suggested fix, grounded in similar past incidents (RAG over Postgres + pgvector, answered by Claude).
 
-**Status:** in progress — see [ROADMAP.md](ROADMAP.md). Full results and architecture land in Phase 7.
+**Status:** in progress — see [ROADMAP.md](ROADMAP.md). Full results and architecture land in Phase 8.
 
 ## Quick start (Phase 1)
 

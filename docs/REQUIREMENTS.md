@@ -23,7 +23,7 @@ to Claude (retrieval-augmented generation).
 
 | User | How they use it |
 |---|---|
-| On-call engineer | Pastes a log into `POST /triage`, reads the summary and next steps |
+| On-call engineer | Pastes a log into the web UI (or `POST /triage`), reads the summary and next steps |
 | CI/CD pipeline | Uploads a failed job's log to S3 → triaged automatically |
 | Team lead / SRE | Adds resolved incidents (`POST /index-incident`), confirms or corrects triage results, watches metrics |
 
@@ -40,13 +40,18 @@ to Claude (retrieval-augmented generation).
 | FR-7 | Claude's output is schema-validated (structured outputs); malformed or refused responses return HTTP 502 with a clear message | 3 |
 | FR-8 | Claude may only cite incidents it was shown; any other IDs are dropped | 3 |
 | FR-9 | Obvious secrets in logs (API keys, bearer tokens, passwords in URLs/env dumps, AWS keys) are redacted before the log is sent to the LLM or stored | 3 |
-| FR-10 | `POST /feedback` lets an engineer mark a triage correct or supply the real root cause/fix; confirmed results can be indexed as new incidents | 5 |
-| FR-11 | Every triage run is stored (log fingerprint, result, latency, model, feedback) | 5 |
-| FR-12 | Duplicate suppression: a log whose normalised fingerprint was triaged within a configurable window returns the cached result plus a duplicate count, without calling the LLM | 5 |
-| FR-13 | `GET /stats` reports incidents indexed, triages run, duplicates suppressed, feedback accuracy | 5 |
-| FR-14 | Uploading a log to S3 `incoming/` triggers a Lambda that calls `/triage` and writes the result to `triaged/<key>.json` | 6 |
-| FR-15 | Triage metrics (latency, severity, matches, duplicates) are published to CloudWatch; an alarm fires on critical-severity triages | 6 |
+| FR-10 | `POST /feedback` lets an engineer mark a triage correct or supply the real root cause/fix; confirmed results can be indexed as new incidents | 6 |
+| FR-11 | Every triage run is stored (log fingerprint, result, latency, model, feedback) | 6 |
+| FR-12 | Duplicate suppression: a log whose normalised fingerprint was triaged within a configurable window returns the cached result plus a duplicate count, without calling the LLM | 6 |
+| FR-13 | `GET /stats` reports incidents indexed, triages run, duplicates suppressed, feedback accuracy | 6 |
+| FR-14 | Uploading a log to S3 `incoming/` triggers a Lambda that calls `/triage` and writes the result to `triaged/<key>.json` | 7 |
+| FR-15 | Triage metrics (latency, severity, matches, duplicates) are published to CloudWatch; an alarm fires on critical-severity triages | 7 |
 | FR-16 | `GET /health` reports DB connectivity and incident count | 1 |
+| FR-17 | Web UI triage page: paste a log (or pick a sample), see severity, root cause, fix, next steps, confidence, matched incidents with similarity, and latency breakdown | 4 |
+| FR-18 | Web UI incidents page: search/filter past incidents, view details, add a resolved incident via a form | 4 |
+| FR-19 | `GET /incidents` (paginated, text + severity filter), `GET /incidents/{id}`, `GET /samples` | 4 |
+| FR-20 | Web UI shows loading, error (422/502 message) and "no close match" states clearly | 4 |
+| FR-21 | Web UI feedback buttons, duplicate badge, and stats page | 6 |
 
 ## 5. Non-functional requirements
 
@@ -59,6 +64,7 @@ to Claude (retrieval-augmented generation).
 | NFR-5 | Log input is untrusted: prompt-injection text inside a log must not change the system's instructions | required |
 | NFR-6 | Max log size 50,000 chars; longer input rejected with 422 | required |
 | NFR-7 | Metrics publishing never fails a triage request | required |
+| NFR-9 | Web UI usable at phone width and in light and dark mode | required |
 | NFR-8 | Every number in the README comes from a script in this repo that anyone can re-run | required |
 
 ## 6. Success metrics
@@ -71,7 +77,7 @@ to Claude (retrieval-augmented generation).
 | Severity accuracy (exact / within ±1) | ≥ 70% / ≥ 95% | `scripts/eval_triage.py` |
 | Correct past incident cited | ≥ 85% recall | `scripts/eval_triage.py` |
 | Triage latency p50 / p95 | < 2 s / reported | `scripts/bench.py` |
-| LLM calls avoided by dedup on a noisy replay | reported | Phase 5 replay script |
+| LLM calls avoided by dedup on a noisy replay | reported | Phase 6 replay script |
 
 Targets are starting points. If one is missed, the README reports the real number and why.
 
@@ -80,12 +86,12 @@ Targets are starting points. If one is missed, the README reports the real numbe
 - Authentication, multi-tenancy, per-team data isolation
 - Streaming ingestion (Kafka/Kinesis) — S3 batch upload only
 - Automatically applying fixes or opening PRs
-- A production deploy to real AWS (optional extra after Phase 7)
-- A web UI (optional extra)
+- A production deploy to real AWS (optional extra after Phase 8)
+- User accounts / login on the web UI
 
 ## 8. Constraints and assumptions
 
 - Python 3.12 in Docker; 3.13 for the local venv (3.15 lacks wheels for the ONNX runtime)
-- Ports: Postgres **5438**, Moto **4567**, API **8030** (others are taken by existing projects)
+- Ports: Postgres **5438**, Moto **4567**, API **8030**, web UI **5181** (others are taken by existing projects)
 - `ANTHROPIC_API_KEY` is not set yet; Phases 1–2 don't need it
 - The historical dataset starts with 20 hand-written incidents. The 200+ set includes synthetic variants, labelled as such

@@ -37,7 +37,7 @@ Run per mode in Phase 2: `--mode vector | keyword | hybrid`.
 
 ---
 
-## 3. Triage quality eval — `scripts/eval_triage.py` (Phase 4)
+## 3. Triage quality eval — `scripts/eval_triage.py` (Phase 5)
 
 Each eval query gets ground truth: expected incident, expected severity, and 2–4
 **key facts** the root cause must mention (e.g. "connection leak", "sessions not closed").
@@ -66,7 +66,7 @@ it doesn't lower any metric beyond noise (re-run once if the difference is small
 
 ---
 
-## 4. Latency + cost — `scripts/bench.py` (Phase 7)
+## 4. Latency + cost — `scripts/bench.py` (Phase 8)
 
 - N = 30 warm requests per log type through the real HTTP API, after 3 warm-up calls
 - Report p50 / p95 / max for `embed`, `search`, `llm`, `total` (from the response's `latency_ms`) plus client-side wall time
@@ -76,14 +76,14 @@ it doesn't lower any metric beyond noise (re-run once if the difference is small
 
 ---
 
-## 5. Noise reduction — `scripts/replay_noise.py` (Phase 5)
+## 5. Noise reduction — `scripts/replay_noise.py` (Phase 6)
 
 - Generate a burst of logs from a small number of distinct failures (e.g. 500 logs, 12 failures) with randomised timestamps, request IDs and IPs
 - Replay through `/triage` and report: total logs, LLM calls made, calls avoided by dedup, % reduction, time saved (avoided calls × mean LLM latency)
 
 ---
 
-## 6. In CI (Phase 7)
+## 6. In CI (Phase 8)
 
 - Unit tests (no key, no network)
 - Seed + retrieval eval against a pgvector service container; **fail if hit@3 drops below the committed baseline minus 5 points**

@@ -1,6 +1,6 @@
 # Implementation plan
 
-Seven phases, about one day each. Every phase ends with: results shown → commit → push → review before the next phase.
+Eight phases, about one day each. Every phase ends with: results shown → commit → push → review before the next phase.
 Requirement IDs (FR/NFR) refer to [REQUIREMENTS.md](REQUIREMENTS.md); ADRs to [DECISIONS.md](DECISIONS.md).
 
 Status: ✅ done · 🔄 in progress · ⬜ not started
@@ -78,7 +78,43 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 4 — Triage quality eval ⬜
+## Phase 4 — Frontend ⬜
+**Goal:** anyone can paste a log in a browser and read the triage. **Covers:** FR-17 to FR-20. See ADR-012.
+
+**Stack:** React 18 + Vite + TypeScript + Tailwind CSS, in `frontend/`. Dev server on **5181**; `/api/*` proxied to the API on 8030 (same origin, so no CORS).
+
+**Backend additions**
+- [ ] `GET /incidents?q=&severity=&limit=&offset=` — paginated list for the browse page
+- [ ] `GET /incidents/{id}` — full incident, including the log
+- [ ] `GET /samples` — a few eval logs for the "Try a sample" buttons
+
+**Pages**
+- [ ] **Triage** (`/`)
+  - log text area with a character count (50k limit), `top_k` selector, Triage button
+  - "Try a sample" chips that fill the box
+  - loading state with elapsed time; errors shown inline (422 / 502 with the API's message)
+  - result card: severity badge (colour by level), root cause, severity reason, fix (code-formatted when it contains code), numbered next steps, confidence meter
+  - matched past incidents: similarity bar, "cited by Claude" marker, expandable root cause + fix
+  - "no close match" state when retrieval finds nothing above the threshold
+  - latency breakdown bar (embed / search / Claude)
+- [ ] **Incidents** (`/incidents`) — searchable, filterable table; detail drawer; "Add incident" form → `POST /index-incident`
+- [ ] Layout: header nav, health indicator (incident count from `/health`), responsive down to phone width, light/dark
+
+**Tests**
+- [ ] Vitest + React Testing Library: result card renders each severity; error and no-match states; sample chip fills the box
+- [ ] Typed API client (`src/api.ts`) mirroring the Pydantic schemas
+
+**Acceptance criteria**
+- `npm run dev` → paste a sample log → result card renders with matched incidents and latency
+- Incident added through the form shows up in a triage of a similar log
+- `npm run build` and `npm test` pass
+- Screenshots saved to `docs/screenshots/`
+
+**Later phases add to the UI:** Phase 6 → feedback buttons (👍 / ✏️ correct it) and a Stats page; Phase 7 → the frontend in Docker (nginx serving the build, proxying `/api`); Phase 8 → frontend build + tests in CI.
+
+---
+
+## Phase 5 — Triage quality eval ⬜
 **Goal:** a measured accuracy number for Claude's answers. See [EVAL_PLAN.md](EVAL_PLAN.md) §3.
 
 **Tasks**
@@ -93,7 +129,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 5 — Feedback loop + noise reduction ⬜
+## Phase 6 — Feedback loop + noise reduction ⬜
 **Covers:** FR-10 to FR-13.
 
 **Tasks**
@@ -101,6 +137,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - [ ] Fingerprint = SHA-256 of the normalised, redacted log; cached hit within `DEDUP_WINDOW_MIN` → return the stored result + `duplicate_of`, `duplicate_count`
 - [ ] `POST /feedback`; when `index: true`, create an incident from the confirmed/corrected triage
 - [ ] `GET /stats`
+- [ ] Frontend: feedback buttons on the result card (👍 correct / ✏️ correct it → form), duplicate badge ("seen 37 times"), Stats page
 - [ ] `scripts/replay_noise.py` — replay a burst (e.g. 500 logs from 12 distinct failures with varying timestamps/IDs) → LLM calls made vs avoided
 - [ ] Tests for dedup window, feedback → indexing
 
@@ -108,11 +145,12 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 6 — Cloud workflow ⬜
+## Phase 7 — Cloud workflow ⬜
 **Covers:** FR-14, FR-15, NFR-7.
 
 **Tasks**
 - [ ] `Dockerfile` (python:3.12-slim, embedding model baked in); `api` service in compose on 8030
+- [ ] `frontend/Dockerfile` (multi-stage: Node build → nginx); `web` service on 5181 proxying `/api` to `api`
 - [ ] Moto service on 4567
 - [ ] `lambda_fn/handler.py` — S3 event → read object → POST `/triage` → `triaged/` or `failed/`; stdlib `urllib` for HTTP
 - [ ] `scripts/simulate_s3_ingest.py` — create bucket, upload sample logs, invoke handler with S3-shaped events, print results
@@ -123,19 +161,19 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 7 — CI + publish ⬜
+## Phase 8 — CI + publish ⬜
 
 **Tasks**
 - [ ] `.github/workflows/ci.yml` — ruff, pytest, pgvector service container, seed + retrieval eval; fail if hit@3 < threshold
+- [ ] CI job for the frontend: `npm ci`, typecheck, `npm test`, `npm run build`
 - [ ] `scripts/bench.py` — N warm triages → p50/p95 for embed / search / LLM / total → `results/bench.json`
-- [ ] README: what it does, architecture diagram, quick start, API examples, measured results table, limitations
+- [ ] README: screenshots, what it does, architecture diagram, quick start, API examples, measured results table, limitations
 - [ ] Final review of docs vs what was built; update ROADMAP to ✅
 
 **Acceptance criteria:** CI green on GitHub; every README number traceable to a file in `results/`.
 
 ---
 
-## Optional extras (after Phase 7)
+## Optional extras (after Phase 8)
 - Real AWS deploy (S3 notification → Lambda, API on ECS/App Runner)
 - `LLM_PROVIDER=bedrock` switch
-- Minimal web page: paste a log, see the triage

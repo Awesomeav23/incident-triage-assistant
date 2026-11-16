@@ -4,7 +4,9 @@
 
 ```mermaid
 flowchart LR
-    Eng[Engineer] -->|POST /triage| API
+    Eng[Engineer] -->|browser| UI[React web UI]
+    UI -->|/api/triage| API
+    CLI[curl / other tools] -->|POST /triage| API
     CI[CI pipeline] -->|upload log| S3[(S3 incoming/)]
     S3 -->|ObjectCreated| L[Lambda handler]
     L -->|POST /triage| API
@@ -30,6 +32,7 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 
 | Component | File | Responsibility |
 |---|---|---|
+| Web UI | `frontend/` (Phase 4) | React + Vite + TS + Tailwind; Triage, Incidents, Stats pages; typed client in `src/api.ts` |
 | API | `app/main.py` | Routes, request timing, wiring dependencies |
 | Schemas | `app/models.py` | Pydantic request/response models, LLM output schema |
 | Retrieval | `app/rag.py` | Log normalisation, embeddings, pgvector + full-text search, DB access |
@@ -37,22 +40,22 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 | Redaction | `app/redact.py` (Phase 3) | Strip secrets from logs before storage or LLM |
 | Metrics | `app/metrics.py` | CloudWatch `put_metric_data`, never raises |
 | Config | `app/config.py` | Env-var settings |
-| Lambda | `lambda_fn/handler.py` (Phase 6) | S3 event → `/triage` → S3 result + metric |
+| Lambda | `lambda_fn/handler.py` (Phase 7) | S3 event → `/triage` → S3 result + metric |
 | Scripts | `scripts/` | Seed, dataset expansion, evals, benchmark, S3 simulation |
 
 ## 3. Request flow — `POST /triage`
 
 1. **Validate** — Pydantic: 10 ≤ len(log) ≤ 50,000; `top_k` 1–10.
 2. **Redact** secrets (Phase 3).
-3. **Fingerprint** — SHA-256 of the normalised log; if seen within the dedup window, return the cached result (Phase 5).
+3. **Fingerprint** — SHA-256 of the normalised log; if seen within the dedup window, return the cached result (Phase 6).
 4. **Embed** — normalised log → 384-dim vector (bge-small, local ONNX).
 5. **Search** — vector top-N + full-text top-N, merged with reciprocal rank fusion (Phase 2); drop matches below the similarity threshold.
 6. **LLM** — system prompt + `<past_incidents>` JSON + `<new_log>` → Claude → validated `LLMTriage`.
 7. **Guard** — remove cited IDs that weren't in the retrieved set.
-8. **Record** — store the triage run (Phase 5); publish metrics.
+8. **Record** — store the triage run (Phase 6); publish metrics.
 9. **Respond** — `TriageResponse` with per-step latency (`embed`, `search`, `llm`, `total`).
 
-## 4. Ingestion flow — S3 → Lambda (Phase 6)
+## 4. Ingestion flow — S3 → Lambda (Phase 7)
 
 1. CI uploads `incoming/<job-id>.log` to the triage bucket.
 2. S3 `ObjectCreated` event invokes `lambda_fn.handler`.
@@ -86,7 +89,7 @@ ALTER TABLE incidents ADD COLUMN search_tsv tsvector
     GENERATED ALWAYS AS (to_tsvector('simple', title || ' ' || error_type || ' ' || log_text)) STORED;
 CREATE INDEX ON incidents USING gin (search_tsv);
 
--- Phase 5: history, feedback, dedup
+-- Phase 6: history, feedback, dedup
 CREATE TABLE triage_runs (
     id              SERIAL PRIMARY KEY,
     fingerprint     TEXT NOT NULL,         -- sha256 of normalised log
@@ -142,6 +145,11 @@ Response:
 ```
 Errors: `422` invalid input · `502` LLM error/refusal/no structured output.
 
+### Phase 4 (for the web UI)
+- `GET /incidents?q=redis&severity=critical&limit=20&offset=0` → `{ "items": [...], "total": 214 }`
+- `GET /incidents/{id}` → full incident including `log_text`
+- `GET /samples` → `[{ "name": "Redis failover", "log": "..." }]`
+
 ### Later phases
 - `POST /feedback` — `{ "triage_run_id": 12, "correct": false, "root_cause": "...", "fix": "...", "index": true }`
 - `GET /stats` — `{ "incidents_indexed": 214, "triages": 530, "duplicates_suppressed": 401, "feedback_accuracy": 0.82 }`
@@ -164,22 +172,29 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output.
 | `EMBED_MODEL` / `EMBED_DIM` | `BAAI/bge-small-en-v1.5` / `384` | Embeddings |
 | `TOP_K` | `3` | Default retrieval depth |
 | `MIN_SIMILARITY` | set in Phase 2 | "No close match" threshold |
-| `DEDUP_WINDOW_MIN` | `60` | Phase 5 duplicate window |
+| `DEDUP_WINDOW_MIN` | `60` | Phase 6 duplicate window |
 | `METRICS_ENABLED` | `false` | CloudWatch publishing |
 | `AWS_ENDPOINT_URL` | — | `http://localhost:4567` for Moto |
 
-## 9. Local ports
+## 9. Web UI → API
+
+In development, Vite proxies `/api/*` to `http://localhost:8030` (prefix stripped). In Docker, nginx serves the built
+files and proxies `/api/*` to the `api` container. The browser always talks to one origin, so the API needs no CORS setup.
+
+## 10. Local ports
 
 | Service | Port |
 |---|---|
 | Postgres + pgvector | 5438 |
 | Moto (S3, CloudWatch) | 4567 |
-| API (Docker) | 8030 |
+| API | 8030 |
+| Web UI (Vite dev / nginx in Docker) | 5181 |
 
-## 10. Repository layout (target)
+## 11. Repository layout (target)
 
 ```
 incident-triage-assistant/
+├── frontend/       React + Vite app (src/pages, src/components, src/api.ts), Dockerfile, nginx.conf
 ├── app/            main.py, models.py, rag.py, llm.py, redact.py, metrics.py, config.py
 ├── lambda_fn/      handler.py
 ├── scripts/        seed.py, expand_dataset.py, eval_retrieval.py, eval_triage.py,
