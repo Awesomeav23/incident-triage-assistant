@@ -6,7 +6,7 @@ Task-level detail: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 | # | Phase | Status | Outcome |
 |---|---|---|---|
 | 0 | Docs | ✅ | Requirements, architecture, decisions, plan, eval plan |
-| 1 | Core search | 🔄 | pgvector store, seed, `/index-incident`, retrieval eval |
+| 1 | Core search | ✅ | pgvector store, seed, `/index-incident`, retrieval eval |
 | 2 | Bigger dataset + hybrid search | ⬜ | 200+ incidents, vector + keyword search compared |
 | 3 | Claude triage + tests | 🔄 | `/triage`, redaction, citation guard, pytest suite |
 | 4 | Triage quality eval | ⬜ | Severity / citation / root-cause accuracy numbers |

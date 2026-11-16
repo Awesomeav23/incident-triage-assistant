@@ -1,0 +1,132 @@
+{
+  "run_at": "2026-11-16T16:29:32+00:00",
+  "git_sha": "8068be5",
+  "config": {
+    "mode": "vector",
+    "embed_model": "BAAI/bge-small-en-v1.5",
+    "k": 10
+  },
+  "dataset": {
+    "indexed": 20,
+    "queries": 15,
+    "matchable": 14
+  },
+  "metrics": {
+    "hit@1": 1.0,
+    "hit@3": 1.0,
+    "mrr": 1.0,
+    "mean_top_sim_matchable": 0.921,
+    "mean_top_sim_no_match": 0.682,
+    "embed_ms_p50": 20.07,
+    "embed_ms_p95": 24.82,
+    "search_ms_p50": 2.79,
+    "search_ms_p95": 3.41
+  },
+  "per_query": [
+    {
+      "name": "pool exhaustion, different service and pool size",
+      "expected": "Postgres connection pool exhausted under load",
+      "rank": 1,
+      "top1": "Postgres connection pool exhausted under load",
+      "top_similarity": 0.927
+    },
+    {
+      "name": "NPE on null address, different getter",
+      "expected": "Java NullPointerException on missing customer address",
+      "rank": 1,
+      "top1": "Java NullPointerException on missing customer address",
+      "top_similarity": 0.94
+    },
+    {
+      "name": "OOMKilled, different pod",
+      "expected": "Pod OOMKilled after image-processing library upgrade",
+      "rank": 1,
+      "top1": "Pod OOMKilled after image-processing library upgrade",
+      "top_similarity": 0.908
+    },
+    {
+      "name": "npm ci lockfile drift, different package",
+      "expected": "npm ci fails: lockfile out of sync with package.json",
+      "rank": 1,
+      "top1": "npm ci fails: lockfile out of sync with package.json",
+      "top_similarity": 0.913
+    },
+    {
+      "name": "redis refused, different host",
+      "expected": "Redis ConnectionError after ElastiCache failover",
+      "rank": 1,
+      "top1": "Redis ConnectionError after ElastiCache failover",
+      "top_similarity": 0.888
+    },
+    {
+      "name": "expired cert via httpx",
+      "expected": "Expired TLS certificate on internal payments gateway",
+      "rank": 1,
+      "top1": "Expired TLS certificate on internal payments gateway",
+      "top_similarity": 0.879
+    },
+    {
+      "name": "unhandled rejection, ECONNRESET",
+      "expected": "Node.js unhandled promise rejection crashes worker",
+      "rank": 1,
+      "top1": "Node.js unhandled promise rejection crashes worker",
+      "top_similarity": 0.901
+    },
+    {
+      "name": "terraform lock, different state path",
+      "expected": "Terraform state lock held by crashed pipeline",
+      "rank": 1,
+      "top1": "Terraform state lock held by crashed pipeline",
+      "top_similarity": 0.947
+    },
+    {
+      "name": "kafka max.poll.interval exceeded",
+      "expected": "Kafka consumer lag from rebalance storm",
+      "rank": 1,
+      "top1": "Kafka consumer lag from rebalance storm",
+      "top_similarity": 0.976
+    },
+    {
+      "name": "go nil map, different package",
+      "expected": "Go panic: nil map assignment in config loader",
+      "rank": 1,
+      "top1": "Go panic: nil map assignment in config loader",
+      "top_similarity": 0.897
+    },
+    {
+      "name": "S3 KMS access denied on GetObject",
+      "expected": "S3 AccessDenied after IAM role policy change",
+      "rank": 1,
+      "top1": "S3 AccessDenied after IAM role policy change",
+      "top_similarity": 0.852
+    },
+    {
+      "name": "WAL disk full",
+      "expected": "Disk full on Postgres primary from WAL retention",
+      "rank": 1,
+      "top1": "Disk full on Postgres primary from WAL retention",
+      "top_similarity": 0.991
+    },
+    {
+      "name": "liveness probe on slow start",
+      "expected": "Health check flapping: liveness probe too aggressive on JVM startup",
+      "rank": 1,
+      "top1": "Health check flapping: liveness probe too aggressive on JVM startup",
+      "top_similarity": 0.939
+    },
+    {
+      "name": "celery redelivery duplicate",
+      "expected": "Celery tasks stuck: broker visibility timeout too short",
+      "rank": 1,
+      "top1": "Celery tasks stuck: broker visibility timeout too short",
+      "top_similarity": 0.932
+    },
+    {
+      "name": "novel: segfault in native extension (no good match)",
+      "expected": null,
+      "rank": null,
+      "top1": "Database migration deadlock during deploy",
+      "top_similarity": 0.682
+    }
+  ]
+}

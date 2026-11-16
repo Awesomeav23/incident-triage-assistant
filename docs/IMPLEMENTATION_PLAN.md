@@ -13,24 +13,26 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 1 — Core search 🔄
+## Phase 1 — Core search ✅
 **Goal:** store incidents and find the closest match to a new log. **Covers:** FR-1, FR-2, FR-3, FR-16, NFR-1.
 
 **Tasks**
-- [x] `app/config.py`, `app/models.py`, `app/rag.py`, `app/main.py` (written, not run)
+- [x] `app/config.py`, `app/models.py`, `app/rag.py`, `app/main.py`
 - [x] `data/sample_logs.json` (20 incidents), `data/eval_queries.json` (15 held-out logs)
-- [ ] `docker-compose.yml` — pgvector/pg16 on 5438 + `scripts/init_test_db.sql`
-- [ ] `requirements.txt` (pinned), `.gitignore`, `.env.example`, `.venv` on Python 3.13
-- [ ] `scripts/seed.py` — `--reset`, loads JSON via the store + embedder, prints count and time
-- [ ] `scripts/eval_retrieval.py` — hit@1, hit@3, MRR, embed/search p50/p95 → `results/retrieval.json`
-- [ ] Smoke test: `uvicorn` + `curl /health` and `/index-incident`
+- [x] `docker-compose.yml` — pgvector/pg16 on 5438 + `scripts/init_test_db.sql`
+- [x] `requirements.txt` (pinned), `.gitignore`, `.env.example`, `.venv` on Python 3.13
+- [x] `scripts/seed.py` — `--reset`, loads JSON via the store + embedder, prints count and time
+- [x] `scripts/eval_retrieval.py` — hit@1, hit@3, MRR, embed/search p50/p95 → `results/retrieval.json`
+- [x] Smoke test: `uvicorn` + `curl /health` and `/index-incident`
 
 **Acceptance criteria**
 - `docker compose up -d db` → healthy; seed loads 20 incidents
 - Eval prints hit@1 / hit@3 / MRR and latency for the 14 matchable queries
 - Retrieval p95 < 200 ms warm
 
-**Risks:** fastembed/onnxruntime wheels on Python 3.13 → fall back to running inside Docker.
+**Risks:** fastembed/onnxruntime wheels on Python 3.13 → fall back to running inside Docker. *(Resolved: installs fine on 3.13.)*
+
+**Result (2026-11-16):** 20 indexed, 15 queries → hit@1 1.0, hit@3 1.0, MRR 1.0; embed p95 24.8 ms, search p95 3.4 ms; mean top similarity 0.92 (matchable) vs 0.68 (no match). Too easy at 20 very different incidents; Phase 2 adds near-neighbour families to make the test meaningful.
 
 ---
 

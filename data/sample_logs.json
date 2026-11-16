@@ -1,0 +1,202 @@
+[
+  {
+    "title": "Postgres connection pool exhausted under load",
+    "service": "orders-api",
+    "error_type": "sqlalchemy.exc.TimeoutError",
+    "log_text": "2025-03-04T10:12:44Z ERROR orders-api request failed path=/orders\nTraceback (most recent call last):\n  File \"/app/orders/routes.py\", line 41, in create_order\n    session.add(order)\n  File \"/usr/local/lib/python3.11/site-packages/sqlalchemy/pool/impl.py\", line 168, in _do_get\n    raise exc.TimeoutError(\nsqlalchemy.exc.TimeoutError: QueuePool limit of size 5 overflow 10 reached, connection timed out, timeout 30.00",
+    "root_cause": "Sessions were opened per request but never closed on the error path, so connections leaked until the QueuePool (5 + 10 overflow) was exhausted during peak traffic.",
+    "fix": "Wrap session usage in a context manager / FastAPI dependency with try/finally session.close(); raise pool_size to 20 and set pool_pre_ping=True. Added a Grafana alert on pool checked-out connections.",
+    "severity": "critical",
+    "tags": ["python", "sqlalchemy", "postgres", "connection-leak"]
+  },
+  {
+    "title": "Java NullPointerException on missing customer address",
+    "service": "billing-service",
+    "error_type": "java.lang.NullPointerException",
+    "log_text": "2025-02-11 08:31:02.118 ERROR [billing-service,7f3a] c.a.billing.InvoiceGenerator - Invoice generation failed\njava.lang.NullPointerException: Cannot invoke \"com.acme.model.Address.getCountryCode()\" because the return value of \"com.acme.model.Customer.getBillingAddress()\" is null\n\tat com.acme.billing.TaxCalculator.rateFor(TaxCalculator.java:57)\n\tat com.acme.billing.InvoiceGenerator.generate(InvoiceGenerator.java:112)\n\tat com.acme.billing.InvoiceJob.run(InvoiceJob.java:34)",
+    "root_cause": "Customers created through the new self-serve signup flow have no billing address; TaxCalculator assumed one always exists.",
+    "fix": "Return Optional<Address> from getBillingAddress(), fall back to the shipping address country, and skip tax with a warning when neither exists. Added a DB constraint check in signup.",
+    "severity": "high",
+    "tags": ["java", "npe", "billing"]
+  },
+  {
+    "title": "Pod OOMKilled after image-processing library upgrade",
+    "service": "thumbnailer",
+    "error_type": "OOMKilled",
+    "log_text": "Name: thumbnailer-6d9f8c7b5-x2k4q\nState: Waiting\n  Reason: CrashLoopBackOff\nLast State: Terminated\n  Reason: OOMKilled\n  Exit Code: 137\n  Started: Tue, 18 Mar 2025 14:02:11 +0000\n  Finished: Tue, 18 Mar 2025 14:03:40 +0000\nRestart Count: 7\nLimits:\n  memory: 512Mi\nEvents:\n  Warning BackOff kubelet Back-off restarting failed container",
+    "root_cause": "Pillow upgrade decoded full-resolution images eagerly; large uploads exceeded the 512Mi container memory limit and the kernel OOM killer terminated the process (exit 137).",
+    "fix": "Use Image.draft()/thumbnail() to downscale during decode, cap input size at 40MP, and raise the memory limit to 1Gi with a matching request.",
+    "severity": "high",
+    "tags": ["kubernetes", "oom", "memory", "python"]
+  },
+  {
+    "title": "npm ci fails: lockfile out of sync with package.json",
+    "service": "web-frontend CI",
+    "error_type": "npm ERR! code EUSAGE",
+    "log_text": "Run npm ci\nnpm ERR! code EUSAGE\nnpm ERR!\nnpm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm ERR!\nnpm ERR! Missing: react-query@5.28.0 from lock file\nError: Process completed with exit code 1.",
+    "root_cause": "A dependency was added to package.json in a PR without committing the regenerated package-lock.json.",
+    "fix": "Run `npm install` locally and commit package-lock.json. Added a pre-commit hook and a CI step that runs `npm install --package-lock-only` and fails on diff.",
+    "severity": "low",
+    "tags": ["ci", "npm", "github-actions"]
+  },
+  {
+    "title": "Redis ConnectionError after ElastiCache failover",
+    "service": "session-service",
+    "error_type": "redis.exceptions.ConnectionError",
+    "log_text": "2025-01-22T03:14:09Z ERROR session-service\nTraceback (most recent call last):\n  File \"/app/session/store.py\", line 28, in get_session\n    data = self.redis.get(key)\n  File \"/usr/local/lib/python3.11/site-packages/redis/connection.py\", line 707, in connect\n    raise ConnectionError(self._error_message(e))\nredis.exceptions.ConnectionError: Error 111 connecting to 10.0.3.45:6379. Connection refused.",
+    "root_cause": "The client was configured with the primary node's IP instead of the ElastiCache primary endpoint DNS name; after an automatic failover the old IP stopped accepting connections.",
+    "fix": "Use the primary endpoint DNS name, enable retry_on_timeout and health_check_interval=30 in the redis client, and add exponential-backoff retries.",
+    "severity": "critical",
+    "tags": ["redis", "aws", "elasticache", "failover"]
+  },
+  {
+    "title": "Expired TLS certificate on internal payments gateway",
+    "service": "checkout",
+    "error_type": "SSLCertVerificationError",
+    "log_text": "2025-04-01T00:00:31Z ERROR checkout payment call failed\nrequests.exceptions.SSLError: HTTPSConnectionPool(host='payments.internal.acme.io', port=443): Max retries exceeded with url: /v2/charge (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1006)')))",
+    "root_cause": "The internal CA-issued certificate on the payments gateway expired; renewal was manual and the reminder went to a deactivated mailbox.",
+    "fix": "Renewed the cert and moved issuance to cert-manager with automatic renewal 30 days before expiry. Added a Prometheus blackbox exporter alert on cert expiry < 14 days.",
+    "severity": "critical",
+    "tags": ["tls", "certificates", "payments"]
+  },
+  {
+    "title": "Node.js unhandled promise rejection crashes worker",
+    "service": "notifications-worker",
+    "error_type": "UnhandledPromiseRejection",
+    "log_text": "node:internal/process/promises:289\n            triggerUncaughtException(err, true /* fromPromise */);\n            ^\n\n[UnhandledPromiseRejection: This error originated either by throwing inside of an async function without a catch block, or by rejecting a promise which was not handled with .catch(). The promise rejected with the reason \"Error: getaddrinfo ENOTFOUND smtp.mailprovider.com\".] {\n  code: 'ERR_UNHANDLED_REJECTION'\n}\nNode.js v20.11.1",
+    "root_cause": "sendEmail() was called without await inside a forEach loop, so a transient DNS failure for the SMTP host became an unhandled rejection that terminated the Node 20 process.",
+    "fix": "Replace forEach with for...of + await (or Promise.allSettled), wrap in try/catch with retry, and register a process-level 'unhandledRejection' logger.",
+    "severity": "high",
+    "tags": ["nodejs", "async", "worker"]
+  },
+  {
+    "title": "Docker build fails: no space left on device in CI runner",
+    "service": "platform CI",
+    "error_type": "no space left on device",
+    "log_text": "#12 [builder 5/8] RUN pip install -r requirements.txt\n#12 41.22 ERROR: Could not install packages due to an OSError: [Errno 28] No space left on device\n#12 ERROR: process \"/bin/sh -c pip install -r requirements.txt\" did not complete successfully: exit code: 1\n------\nfailed to solve: failed to copy files: write /var/lib/docker/overlay2/l/abc/diff/usr/lib: no space left on device",
+    "root_cause": "Self-hosted CI runner never pruned Docker build cache and dangling images; /var/lib/docker filled the 50GB disk.",
+    "fix": "Added a nightly `docker system prune -af --filter until=72h` cron, enabled BuildKit cache limits, and alerting on runner disk usage > 80%.",
+    "severity": "medium",
+    "tags": ["ci", "docker", "disk"]
+  },
+  {
+    "title": "Terraform state lock held by crashed pipeline",
+    "service": "infra CI",
+    "error_type": "Error acquiring the state lock",
+    "log_text": "Error: Error acquiring the state lock\n\nError message: ConditionalCheckFailedException: The conditional request failed\nLock Info:\n  ID:        4b1f2c9e-77aa-4c1e-9a0b-2f5d6e8c1a33\n  Path:      acme-tf-state/prod/network.tfstate\n  Operation: OperationTypeApply\n  Who:       runner@ip-10-0-1-12\n  Version:   1.7.4\n  Created:   2025-03-10 22:41:07 UTC\n\nTerraform acquires a state lock to protect the state from being written by multiple users at the same time.",
+    "root_cause": "A previous apply job was killed on timeout and never released its DynamoDB state lock.",
+    "fix": "Confirm no apply is running, then `terraform force-unlock <LOCK_ID>`. Increased job timeout and added a trap to release the lock on cancellation.",
+    "severity": "medium",
+    "tags": ["terraform", "ci", "dynamodb"]
+  },
+  {
+    "title": "Kafka consumer lag from rebalance storm",
+    "service": "events-consumer",
+    "error_type": "CommitFailedException",
+    "log_text": "2025-02-27 16:45:12,881 WARN  o.a.k.c.c.i.ConsumerCoordinator - [Consumer clientId=events-consumer-3, groupId=events] Offset commit failed on partition events-7 at offset 991823: The coordinator is not aware of this member.\norg.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms",
+    "root_cause": "Batch processing per poll() took longer than max.poll.interval.ms (300s) after a slow downstream API, so consumers were repeatedly kicked from the group, causing a rebalance loop and growing lag.",
+    "fix": "Reduce max.poll.records from 500 to 100, move the slow API call to an async bounded executor, and raise max.poll.interval.ms to 600000.",
+    "severity": "high",
+    "tags": ["kafka", "java", "consumer-lag"]
+  },
+  {
+    "title": "Go panic: nil map assignment in config loader",
+    "service": "edge-proxy",
+    "error_type": "panic: assignment to entry in nil map",
+    "log_text": "panic: assignment to entry in nil map\n\ngoroutine 1 [running]:\ngithub.com/acme/edge-proxy/internal/config.(*Loader).applyOverrides(0xc0000a4000, {0xc0001b2000, 0x3, 0x4})\n\t/src/internal/config/loader.go:88 +0x1a5\ngithub.com/acme/edge-proxy/internal/config.Load({0x7ffd5b3c, 0x12})\n\t/src/internal/config/loader.go:42 +0x2e8\nmain.main()\n\t/src/cmd/edge-proxy/main.go:19 +0x65\nexit status 2",
+    "root_cause": "Config struct's Headers map was only initialised when the YAML file had a headers block; env-var overrides wrote into the nil map.",
+    "fix": "Initialise maps in the constructor (Headers: map[string]string{}) and add a unit test loading a config with no headers block.",
+    "severity": "high",
+    "tags": ["go", "panic", "config"]
+  },
+  {
+    "title": "Flaky pytest: test depends on wall-clock time",
+    "service": "scheduler CI",
+    "error_type": "AssertionError",
+    "log_text": "FAILED tests/test_scheduler.py::test_next_run_is_tomorrow - AssertionError: assert datetime.date(2025, 3, 31) == datetime.date(2025, 4, 1)\n  where datetime.date(2025, 3, 31) = next_run(...).date()\n=========================== short test summary info ============================\nFAILED tests/test_scheduler.py::test_next_run_is_tomorrow\n1 failed, 212 passed in 18.44s",
+    "root_cause": "Test computed 'tomorrow' using local time while next_run() used UTC; it failed whenever CI ran between 00:00 and the UTC offset.",
+    "fix": "Freeze time with freezegun in the test and make both sides use timezone-aware UTC datetimes.",
+    "severity": "low",
+    "tags": ["ci", "pytest", "flaky-test", "timezone"]
+  },
+  {
+    "title": "S3 AccessDenied after IAM role policy change",
+    "service": "report-exporter",
+    "error_type": "botocore.exceptions.ClientError AccessDenied",
+    "log_text": "2025-03-21T09:05:55Z ERROR report-exporter upload failed\nTraceback (most recent call last):\n  File \"/app/exporter/upload.py\", line 22, in upload_report\n    s3.put_object(Bucket=BUCKET, Key=key, Body=body, ServerSideEncryption='aws:kms')\nbotocore.exceptions.ClientError: An error occurred (AccessDenied) when calling the PutObject operation: User: arn:aws:sts::123456789012:assumed-role/report-exporter-role/i-0abc is not authorized to perform: kms:GenerateDataKey on resource: arn:aws:kms:us-east-1:123456789012:key/1a2b",
+    "root_cause": "The bucket switched to SSE-KMS with a customer-managed key, but the service role was never granted kms:GenerateDataKey on that key.",
+    "fix": "Add kms:GenerateDataKey and kms:Decrypt on the key ARN to the role policy and add the role to the key policy. Added an IAM policy simulator check to the infra PR pipeline.",
+    "severity": "high",
+    "tags": ["aws", "s3", "iam", "kms"]
+  },
+  {
+    "title": "Database migration deadlock during deploy",
+    "service": "accounts-api",
+    "error_type": "psycopg2.errors.DeadlockDetected",
+    "log_text": "INFO  [alembic.runtime.migration] Running upgrade a1b2c3 -> d4e5f6, add index on accounts.email\nTraceback (most recent call last):\n  File \"/usr/local/lib/python3.11/site-packages/sqlalchemy/engine/default.py\", line 924, in do_execute\n    cursor.execute(statement, parameters)\npsycopg2.errors.DeadlockDetected: deadlock detected\nDETAIL:  Process 4123 waits for ShareLock on relation 16523 of database 16384; blocked by process 4098.\nProcess 4098 waits for RowExclusiveLock on relation 16530 of database 16384; blocked by process 4123.",
+    "root_cause": "Migration created a non-concurrent index on a hot table while live traffic held row locks, producing a lock-order deadlock.",
+    "fix": "Use CREATE INDEX CONCURRENTLY in an autocommit migration block, set lock_timeout = '5s', and run schema migrations before rolling out new pods.",
+    "severity": "high",
+    "tags": ["postgres", "alembic", "migration", "deadlock"]
+  },
+  {
+    "title": "Lambda timeout calling third-party API without client timeout",
+    "service": "webhook-relay",
+    "error_type": "Task timed out",
+    "log_text": "START RequestId: 9c1e2f3a-1111-4b2b-8c8c-0d0d0d0d0d0d Version: $LATEST\n2025-03-15T12:00:01.002Z 9c1e2f3a INFO forwarding webhook to partner\nEND RequestId: 9c1e2f3a-1111-4b2b-8c8c-0d0d0d0d0d0d\nREPORT RequestId: 9c1e2f3a-1111-4b2b-8c8c-0d0d0d0d0d0d Duration: 30000.00 ms Billed Duration: 30000 ms Memory Size: 256 MB Max Memory Used: 88 MB\n2025-03-15T12:00:31.004Z 9c1e2f3a Task timed out after 30.00 seconds",
+    "root_cause": "requests.post() had no timeout; when the partner endpoint hung, the function waited until the 30s Lambda limit and the webhook was lost.",
+    "fix": "Set timeout=(3, 10) on the HTTP call, push failed deliveries to an SQS DLQ for retry, and alarm on the Lambda Errors metric.",
+    "severity": "medium",
+    "tags": ["aws", "lambda", "timeout"]
+  },
+  {
+    "title": "React build fails: TypeScript strict null error after upgrade",
+    "service": "web-frontend CI",
+    "error_type": "TS2532",
+    "log_text": "> web@1.4.0 build\n> tsc && vite build\n\nsrc/components/UserCard.tsx:24:18 - error TS2532: Object is possibly 'undefined'.\n\n24   const name = user.profile.displayName;\n                    ~~~~~~~~~~~~\n\nFound 1 error in src/components/UserCard.tsx:24\n\nError: Process completed with exit code 2.",
+    "root_cause": "Upgraded API client types made `profile` optional; strictNullChecks flagged unguarded access.",
+    "fix": "Use optional chaining with a fallback (`user.profile?.displayName ?? 'Unknown'`) and render a placeholder when profile is missing.",
+    "severity": "low",
+    "tags": ["ci", "typescript", "react"]
+  },
+  {
+    "title": "Rate limited by GitHub API in release pipeline",
+    "service": "release CI",
+    "error_type": "HTTP 403 rate limit exceeded",
+    "log_text": "Fetching changelog entries for 214 PRs...\nError: HttpError: API rate limit exceeded for installation ID 31337. If you reach out to GitHub Support for help, please include the request ID 8A3F:1B2C:5D6E:7F80.\n    at /home/runner/work/_actions/acme/changelog-action/v2/dist/index.js:4021:23\n  status: 403,\n  response: { headers: { 'x-ratelimit-remaining': '0', 'x-ratelimit-reset': '1711022400' } }",
+    "root_cause": "Changelog action issued one REST call per PR (214 calls) plus retries, exhausting the installation's hourly quota.",
+    "fix": "Switch to a single GraphQL query with pagination, cache results between steps, and honour x-ratelimit-reset with backoff.",
+    "severity": "low",
+    "tags": ["ci", "github", "rate-limit"]
+  },
+  {
+    "title": "Celery tasks stuck: broker visibility timeout too short",
+    "service": "video-transcoder",
+    "error_type": "Duplicate task execution",
+    "log_text": "[2025-02-02 11:00:04,551: WARNING/MainProcess] Received task transcode[5f2a9b] (already acknowledged? redelivered=True)\n[2025-02-02 11:00:04,552: INFO/ForkPoolWorker-3] Task transcode[5f2a9b] started\n[2025-02-02 11:00:04,552: ERROR/ForkPoolWorker-1] Task transcode[5f2a9b] raised unexpected: IntegrityError('duplicate key value violates unique constraint \"renditions_video_id_profile_key\"')",
+    "root_cause": "Transcodes took longer than the Redis broker's 1h visibility_timeout, so unacknowledged tasks were redelivered to another worker and ran twice.",
+    "fix": "Raise broker_transport_options visibility_timeout to 6h, use acks_late with idempotent upserts, and split long transcodes into chunks.",
+    "severity": "medium",
+    "tags": ["python", "celery", "redis", "idempotency"]
+  },
+  {
+    "title": "Disk full on Postgres primary from WAL retention",
+    "service": "primary-db",
+    "error_type": "PANIC: could not write to file pg_wal",
+    "log_text": "2025-01-30 02:17:44.019 UTC [1] PANIC:  could not write to file \"pg_wal/xlogtemp.312\": No space left on device\n2025-01-30 02:17:44.021 UTC [1] LOG:  server process (PID 312) was terminated by signal 6: Aborted\n2025-01-30 02:17:44.021 UTC [1] LOG:  terminating any other active server processes\n2025-01-30 02:17:44.402 UTC [1] LOG:  database system is shut down",
+    "root_cause": "An abandoned logical replication slot from a decommissioned analytics consumer kept WAL from being recycled until the volume filled.",
+    "fix": "Drop the inactive slot (pg_drop_replication_slot), set max_slot_wal_keep_size = 50GB, expand the volume, and alert on pg_replication_slots where active = false.",
+    "severity": "critical",
+    "tags": ["postgres", "wal", "disk", "replication"]
+  },
+  {
+    "title": "Health check flapping: liveness probe too aggressive on JVM startup",
+    "service": "catalog-service",
+    "error_type": "Liveness probe failed",
+    "log_text": "Events:\n  Type     Reason     Age                From     Message\n  ----     ------     ----               ----     -------\n  Warning  Unhealthy  2m (x9 over 4m)    kubelet  Liveness probe failed: Get \"http://10.1.4.22:8080/actuator/health\": dial tcp 10.1.4.22:8080: connect: connection refused\n  Normal   Killing    2m (x3 over 4m)    kubelet  Container catalog-service failed liveness probe, will be restarted",
+    "root_cause": "Spring Boot took ~70s to start after adding a cache warm-up, but the liveness probe started at 30s with 3 failures allowed, so Kubernetes killed the pod before it was ready.",
+    "fix": "Add a startupProbe (failureThreshold 30, periodSeconds 5) so liveness only begins after startup; point liveness at /actuator/health/liveness.",
+    "severity": "medium",
+    "tags": ["kubernetes", "java", "spring", "probes"]
+  }
+]
