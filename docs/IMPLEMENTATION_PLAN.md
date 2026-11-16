@@ -62,7 +62,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 3 — Claude triage + tests 🔄 (live test pending an API key)
+## Phase 3 — Claude triage + tests ✅
 **Goal:** log in → root cause, severity, fix, next steps out. **Covers:** FR-6 to FR-9, NFR-4 to NFR-6.
 
 **Tasks**
@@ -75,7 +75,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - [x] `tests/test_redact.py` — 12 secret shapes masked, ordinary text untouched, zero false positives across all 235 dataset logs
 - [x] `tests/test_rag.py` — real pgvector + embeddings on `triage_test`: every mode finds its incident, exact-code keyword match, cosine bounds, threshold filter, tsquery safety, idempotent schema
 - [x] `tests/test_live.py` (`-m live`) — skipped without `ANTHROPIC_API_KEY`
-- [ ] Run the live test once a key is available
+- [x] Live test passed (2026-11-16): valid structured output, cited the matching Redis-failover incident, severity high, 5 concrete next steps. One call took ~9 s at effort `low` with Opus 5.5, well over the 2 s target; Phase 5 measures latency properly and compares models.
 
 **Result (2026-11-16):** 51 passed, 1 skipped (live) in ~2 s, no API key or network needed.
 
