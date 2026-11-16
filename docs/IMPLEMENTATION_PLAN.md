@@ -62,26 +62,26 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 3 — Claude triage + tests 🔄
+## Phase 3 — Claude triage + tests 🔄 (live test pending an API key)
 **Goal:** log in → root cause, severity, fix, next steps out. **Covers:** FR-6 to FR-9, NFR-4 to NFR-6.
 
 **Tasks**
-- [x] `app/llm.py` (prompt, structured output, refusal/error handling), `/triage` route (written, not run)
-- [ ] `app/redact.py` — AWS keys, bearer/JWT tokens, `password=`, URLs with credentials, private keys → `[REDACTED]`
-- [ ] Wire redaction into `/triage` and `/index-incident`
-- [ ] `tests/test_triage.py` (fakes via dependency overrides):
-  - response schema and severity score mapping
-  - citation guard drops unseen IDs
-  - `LLMError` → 502
-  - 422 on empty / oversized log
-  - normalisation and redaction unit tests
-  - prompt contains tags, and injection text stays inside `<new_log>`
-- [ ] `tests/test_rag.py` — DB-backed against `triage_test` (skipped if DB is down)
-- [ ] Live test (`-m live`), skipped without `ANTHROPIC_API_KEY`
+- [x] `app/llm.py` — prompt, structured output (`beta.messages.parse` → `LLMTriage`), refusal fallback, error mapping; client created lazily
+- [x] `app/redact.py` — PEM keys, URL credentials, Bearer/Basic, JWTs, AWS/Anthropic/GitHub/Slack/Stripe/`sk-` keys, `password=`/`token:`-style pairs → `[REDACTED]`
+- [x] Redaction wired into `/triage` (before embed, search and LLM; count returned as `redacted_secrets`) and `/index-incident` (before storing)
+- [x] Prompt hardening: `<new_log>` / `<past_incidents>` tags inside a log are escaped so a log can't close the tag and inject fake incidents; explicit "no past incident" message when retrieval finds nothing
+- [x] Errors: no/invalid/misconfigured credentials → **503** with a readable message; other Claude failures → 502
+- [x] `tests/test_triage.py` (fakes via dependency overrides): schema, severity mapping, citation guard, no-close-match path, 502/503, 422 bounds, redaction wiring, prompt tags + injection, normalisation
+- [x] `tests/test_redact.py` — 12 secret shapes masked, ordinary text untouched, zero false positives across all 235 dataset logs
+- [x] `tests/test_rag.py` — real pgvector + embeddings on `triage_test`: every mode finds its incident, exact-code keyword match, cosine bounds, threshold filter, tsquery safety, idempotent schema
+- [x] `tests/test_live.py` (`-m live`) — skipped without `ANTHROPIC_API_KEY`
+- [ ] Run the live test once a key is available
 
-**Acceptance criteria**
-- `pytest` green with no API key
-- With a key: one real triage returns valid JSON and cites the right incident
+**Result (2026-11-16):** 51 passed, 1 skipped (live) in ~2 s, no API key or network needed.
+
+**Bugs found by the tests and fixed**
+- `normalize_log` cut long logs at 4,000 chars *after* keeping 20 head lines, so long first lines pushed the tail ("Caused by", innermost frame) out entirely. Now head and tail get separate budgets. A first attempt also capped every line at 300 chars; the retrieval eval caught that it cut "Hostname mismatch" off the end of a TLS error (hybrid hit@1 0.936 → 0.915), so the line cap now applies only to over-budget logs. Eval is back to 0.936.
+- No API key → bare HTTP 500 from inside the SDK. Now a 503 that names `ANTHROPIC_API_KEY`.
 
 ---
 

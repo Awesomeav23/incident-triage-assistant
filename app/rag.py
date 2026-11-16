@@ -55,16 +55,34 @@ _NOISE = [
     (re.compile(r"[ \t]+"), " "),
 ]
 MAX_EMBED_CHARS = 4000  # bge-small truncates at 512 tokens anyway
+# Only for over-budget logs: one giant line (minified JSON, base64) shouldn't eat it all.
+# Normal error lines are never cut: their key words are often at the end.
+MAX_LINE_CHARS = 1000
+HEAD_SHARE = 0.65  # rest of the budget goes to the tail
 
 
 def normalize_log(text: str) -> str:
     for pattern, repl in _NOISE:
         text = pattern.sub(repl, text)
     lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
-    # Keep the head (error message) and tail (innermost frames / "Caused by").
-    if sum(len(ln) for ln in lines) > MAX_EMBED_CHARS and len(lines) > 30:
-        lines = lines[:20] + ["..."] + lines[-10:]
-    return "\n".join(lines)[:MAX_EMBED_CHARS]
+    if sum(len(ln) + 1 for ln in lines) <= MAX_EMBED_CHARS:
+        return "\n".join(lines)
+    lines = [ln[:MAX_LINE_CHARS] for ln in lines]
+    # Too long: keep the head (error message) and the tail (innermost frames,
+    # "Caused by"), each within its own budget so neither crowds the other out.
+    head, used = [], 0
+    for ln in lines:
+        if used + len(ln) + 1 > MAX_EMBED_CHARS * HEAD_SHARE:
+            break
+        head.append(ln)
+        used += len(ln) + 1
+    tail, used_tail = [], 0
+    for ln in reversed(lines[len(head):]):
+        if used + used_tail + len(ln) + 1 > MAX_EMBED_CHARS - 4:
+            break
+        tail.insert(0, ln)
+        used_tail += len(ln) + 1
+    return "\n".join(head + ["..."] + tail)
 
 
 # ---------- keyword tokens ----------

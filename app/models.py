@@ -86,6 +86,7 @@ class TriageResponse(LLMTriage):
         ..., description="True when no past incident cleared the similarity threshold"
     )
     search_mode: str
+    redacted_secrets: int = Field(..., description="Secrets masked before processing")
     latency_ms: dict[str, float] = Field(
         ..., description="embed / search / llm / total timings"
     )

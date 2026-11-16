@@ -8,9 +8,10 @@ from fastapi import Depends, FastAPI, HTTPException
 
 from app import metrics
 from app.config import settings
-from app.llm import LLMError, Triager, get_triager
+from app.llm import LLMConfigError, LLMError, Triager, get_triager
 from app.models import SEVERITY_SCORE, IncidentIn, IndexedIncident, TriageRequest, TriageResponse
 from app.rag import Embedder, IncidentStore, get_embedder
+from app.redact import redact
 
 
 @lru_cache(maxsize=1)
@@ -41,6 +42,7 @@ def index_incident(
     store: IncidentStore = Depends(get_store),
     embedder: Embedder = Depends(get_embedder),
 ):
+    inc.log_text, _ = redact(inc.log_text)  # never store secrets
     # Embed only the log, the same input /triage embeds, so queries and docs match.
     vec = embedder.embed(inc.log_text)
     return IndexedIncident(id=store.add(inc, vec), title=inc.title)
@@ -54,15 +56,18 @@ def triage(
     triager: Triager = Depends(get_triager),
 ):
     t0 = time.perf_counter()
-    vec = embedder.embed(req.log)
+    log, redacted = redact(req.log)  # secrets never reach the embedder, DB or LLM
+    vec = embedder.embed(log)
     t1 = time.perf_counter()
     similar = store.search(
-        vec, req.top_k, mode=settings.search_mode, query_text=req.log,
+        vec, req.top_k, mode=settings.search_mode, query_text=log,
         min_similarity=settings.min_similarity,
     )
     t2 = time.perf_counter()
     try:
-        result = triager.triage(req.log, similar)
+        result = triager.triage(log, similar)
+    except LLMConfigError as e:
+        raise HTTPException(status_code=503, detail=str(e)) from e
     except LLMError as e:
         raise HTTPException(status_code=502, detail=str(e)) from e
     t3 = time.perf_counter()
@@ -85,6 +90,7 @@ def triage(
         similar_incidents=similar,
         no_close_match=not similar,
         search_mode=settings.search_mode,
+        redacted_secrets=redacted,
         latency_ms=latency,
         model=triager.model,
     )

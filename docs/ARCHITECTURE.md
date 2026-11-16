@@ -146,7 +146,9 @@ Response:
   "model": "claude-opus-5-5"
 }
 ```
-Errors: `422` invalid input · `502` LLM error/refusal/no structured output.
+Also returned: `no_close_match`, `search_mode`, `redacted_secrets`.
+
+Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `503` Claude credentials missing, rejected or misconfigured.
 
 ### Phase 4 (for the web UI)
 - `GET /incidents?q=redis&severity=critical&limit=20&offset=0` → `{ "items": [...], "total": 214 }`

@@ -19,6 +19,7 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-003 — Normalise logs before embedding
 - **Decision:** replace timestamps, UUIDs, IPs, hex addresses and hashes with placeholders; keep the head and tail of long logs.
 - **Why:** two occurrences of the same bug differ mostly in these tokens. Removing them pulls duplicates together in vector space and gives a stable fingerprint for dedup.
+- **Long logs:** over 4,000 chars, the head (~65%) and tail (~35%) are kept with separate budgets, so the innermost frames survive. Lines are capped at 1,000 chars only in that case; normal error lines are never cut, because their key words are often at the end (a 300-char cap measurably hurt retrieval).
 - **Cost:** may occasionally remove a meaningful value (for example, a specific IP that *is* the problem). The raw log still goes to the LLM.
 
 ### ADR-004 — Hybrid retrieval with reciprocal rank fusion (Phase 2)

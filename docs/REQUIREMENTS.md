@@ -37,7 +37,7 @@ to Claude (retrieval-augmented generation).
 | FR-4 | Hybrid retrieval: vector similarity combined with Postgres full-text keyword search | 2 |
 | FR-5 | Matches below a similarity threshold are reported as "no close match" instead of being passed to the LLM as if relevant | 2 |
 | FR-6 | `POST /triage` returns root-cause summary, severity (5 levels + 1–5 score), severity reason, suggested fix, up to 5 next steps, cited incident IDs, confidence (0–1), the similar incidents, and per-step latency | 3 |
-| FR-7 | Claude's output is schema-validated (structured outputs); malformed or refused responses return HTTP 502 with a clear message | 3 |
+| FR-7 | Claude's output is schema-validated (structured outputs); malformed or refused responses return HTTP 502 with a clear message; missing or invalid credentials return 503 | 3 |
 | FR-8 | Claude may only cite incidents it was shown; any other IDs are dropped | 3 |
 | FR-9 | Obvious secrets in logs (API keys, bearer tokens, passwords in URLs/env dumps, AWS keys) are redacted before the log is sent to the LLM or stored | 3 |
 | FR-10 | `POST /feedback` lets an engineer mark a triage correct or supply the real root cause/fix; confirmed results can be indexed as new incidents | 6 |

@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-11-16T16:45:05+00:00",
-  "git_sha": "8d4f719",
+  "run_at": "2026-11-16T17:21:08+00:00",
+  "git_sha": "52ed6c8",
   "config": {
     "embed_model": "BAAI/bge-small-en-v1.5",
     "k": 10
@@ -16,28 +16,28 @@
       "hit@1": 0.894,
       "hit@3": 0.936,
       "mrr": 0.915,
-      "embed_ms_p50": 15.28,
-      "embed_ms_p95": 23.35,
-      "search_ms_p50": 3.78,
-      "search_ms_p95": 4.84
+      "embed_ms_p50": 16.11,
+      "embed_ms_p95": 24.73,
+      "search_ms_p50": 4.01,
+      "search_ms_p95": 6.23
     },
     "keyword": {
       "hit@1": 0.872,
       "hit@3": 0.936,
       "mrr": 0.904,
-      "embed_ms_p50": 15.1,
-      "embed_ms_p95": 23.12,
-      "search_ms_p50": 3.43,
-      "search_ms_p95": 5.1
+      "embed_ms_p50": 15.03,
+      "embed_ms_p95": 21.63,
+      "search_ms_p50": 3.32,
+      "search_ms_p95": 4.6
     },
     "hybrid": {
       "hit@1": 0.936,
       "hit@3": 0.957,
       "mrr": 0.95,
-      "embed_ms_p50": 15.27,
-      "embed_ms_p95": 23.92,
-      "search_ms_p50": 4.15,
-      "search_ms_p95": 7.49
+      "embed_ms_p50": 15.9,
+      "embed_ms_p95": 23.04,
+      "search_ms_p50": 4.36,
+      "search_ms_p95": 5.62
     }
   },
   "best_mode": "hybrid",
