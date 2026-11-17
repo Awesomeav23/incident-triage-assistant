@@ -85,37 +85,33 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 4 — Frontend ⬜
+## Phase 4 — Frontend ✅
 **Goal:** anyone can paste a log in a browser and read the triage. **Covers:** FR-17 to FR-20. See ADR-012.
 
-**Stack:** React 18 + Vite + TypeScript + Tailwind CSS, in `frontend/`. Dev server on **5181**; `/api/*` proxied to the API on 8030 (same origin, so no CORS).
+**Stack:** React 18 + Vite 5 + TypeScript + Tailwind 3 (exact versions pinned) in `frontend/`. Dev server on **5181**; `/api/*` proxied to the API on `127.0.0.1:8030` (same origin, so no CORS).
 
 **Backend additions**
-- [ ] `GET /incidents?q=&severity=&limit=&offset=` — paginated list for the browse page
-- [ ] `GET /incidents/{id}` — full incident, including the log
-- [ ] `GET /samples` — a few eval logs for the "Try a sample" buttons
+- [x] `GET /incidents?q=&severity=&limit=&offset=&include_synthetic=` — paginated; `q` is a case-insensitive match on title/service/error type/family with LIKE wildcards escaped
+- [x] `GET /incidents/{id}` (404 when missing), `GET /samples` (7 held-out logs from `data/samples.json`, never indexed)
+- [x] `/triage` returns **one incident per failure family** (`distinct_families`, ADR-013)
 
 **Pages**
-- [ ] **Triage** (`/`)
-  - log text area with a character count (50k limit), `top_k` selector, Triage button
-  - "Try a sample" chips that fill the box
-  - loading state with elapsed time; errors shown inline (422 / 502 with the API's message)
-  - result card: severity badge (colour by level), root cause, severity reason, fix (code-formatted when it contains code), numbered next steps, confidence meter
-  - matched past incidents: similarity bar, "cited by Claude" marker, expandable root cause + fix
-  - "no close match" state when retrieval finds nothing above the threshold
-  - latency breakdown bar (embed / search / Claude)
-- [ ] **Incidents** (`/incidents`) — searchable, filterable table; detail drawer; "Add incident" form → `POST /index-incident`
-- [ ] Layout: header nav, health indicator (incident count from `/health`), responsive down to phone width, light/dark
+- [x] **Triage** (`/`): sample chips, log box with 50k counter, matches selector, ⌘/Ctrl+Enter, live elapsed timer; result card with severity badge, confidence meter, no-match banner, redaction notice, root cause, numbered fix steps, next steps, inline `code`; similar incidents with similarity bar, "Cited by Claude" and expandable root cause/fix; latency breakdown
+- [x] **Incidents** (`/incidents`): debounced search, severity filter, "Hide synthetic copies" (on by default), pagination, detail drawer (Esc closes), add-incident form with field validation
+- [x] Header with health indicator; light/dark (follows the OS); no horizontal scroll at 390 px
 
-**Tests**
-- [ ] Vitest + React Testing Library: result card renders each severity; error and no-match states; sample chip fills the box
-- [ ] Typed API client (`src/api.ts`) mirroring the Pydantic schemas
+**Tests:** 19 Vitest/RTL tests (result card for every severity, citations, no-match, redaction, expand; triage flow, disabled state, API error text; add-incident validation + payload; error-message mapping). Backend: 60 passed, 1 live skipped. `npm run typecheck` and `npm run build` clean (60 KB gzipped JS).
 
-**Acceptance criteria**
-- `npm run dev` → paste a sample log → result card renders with matched incidents and latency
-- Incident added through the form shows up in a triage of a similar log
-- `npm run build` and `npm test` pass
-- Screenshots saved to `docs/screenshots/`
+**Screenshots** (`docs/screenshots/`, captured by `scripts/screenshots.py` with Playwright driving the installed Chrome, real Claude calls).
+
+**Found while reviewing the screenshots, and fixed**
+- The 3 similar incidents were often recurrences of one failure. Collapsing to one per family gives 3 different causes and raises hybrid **hit@3 from 0.957 to 0.979** (MRR 0.950 → 0.957; hit@1 unchanged at 0.936).
+- Suggested fixes came back as one paragraph with inline "1) 2) 3)". The prompt now asks for one step per line with code in backticks, and the UI keeps line breaks.
+- On phones, incident titles were squeezed beside the similarity bar; the bar and "cited" tag now wrap below.
+- The incidents list was mostly synthetic copies; now hidden by default.
+- Vite's proxy failed with ECONNREFUSED: Node resolves `localhost` to IPv6 `::1` while uvicorn listens on IPv4. The proxy targets `127.0.0.1`.
+
+**Observed, for Phase 5:** Claude took **6.7–15 s** per triage (Opus 5.5, effort low) against the 2 s target. In one run Claude didn't cite the top-ranked OOMKilled incident for a different OOM log, and did in another — citation consistency is a Phase 5 metric.
 
 **Later phases add to the UI:** Phase 6 → feedback buttons (👍 / ✏️ correct it) and a Stats page; Phase 7 → the frontend in Docker (nginx serving the build, proxying `/api`); Phase 8 → frontend build + tests in CI.
 

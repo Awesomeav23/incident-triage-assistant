@@ -41,6 +41,7 @@ def test_triage_passes_settings_to_search(fakes):
     assert store.search_kwargs["top_k"] == 2
     assert store.search_kwargs["mode"] in ("vector", "keyword", "hybrid")
     assert store.search_kwargs["query_text"] == REDIS_LOG
+    assert store.search_kwargs["distinct_families"] is True
 
 
 # ---------- citation guard ----------
@@ -197,3 +198,24 @@ def test_normalize_log_keeps_head_and_tail_of_long_logs():
 
 def test_normalize_log_short_logs_unchanged_apart_from_noise():
     assert normalize_log("  a  \n\n b ") == "a\nb"
+
+
+# ---------- browse endpoints ----------
+
+def test_samples_endpoint_returns_named_logs(fakes):
+    client, *_ = fakes
+    body = client.get("/samples").json()
+    assert len(body) >= 5 and all(s["name"] and len(s["log"]) > 20 for s in body)
+
+
+def test_samples_are_never_in_the_index():
+    import json
+    indexed = {r["log_text"] for r in json.load(open("data/incidents_expanded.json"))}
+    assert not any(s["log"] in indexed for s in json.load(open("data/samples.json")))
+
+
+def test_incident_list_validates_query_params(fakes):
+    client, *_ = fakes
+    assert client.get("/incidents?limit=0").status_code == 422
+    assert client.get("/incidents?limit=101").status_code == 422
+    assert client.get("/incidents?severity=apocalyptic").status_code == 422

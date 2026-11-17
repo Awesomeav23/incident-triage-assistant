@@ -43,6 +43,33 @@ class IndexedIncident(BaseModel):
     title: str
 
 
+class IncidentSummary(BaseModel):
+    id: int
+    title: str
+    service: str
+    error_type: str
+    severity: Severity
+    family: str | None = None
+    synthetic: bool
+    tags: list[str]
+
+
+class IncidentDetail(IncidentSummary):
+    log_text: str
+    root_cause: str
+    fix: str
+
+
+class IncidentPage(BaseModel):
+    items: list[IncidentSummary]
+    total: int
+
+
+class Sample(BaseModel):
+    name: str
+    log: str
+
+
 # ---------- /triage ----------
 
 
@@ -71,7 +98,9 @@ class LLMTriage(BaseModel):
     root_cause_summary: str = Field(..., description="2-4 plain-English sentences")
     severity: Severity
     severity_reason: str
-    suggested_fix: str = Field(..., description="Concrete fix, code or config if useful")
+    suggested_fix: str = Field(
+        ..., description="Concrete fix; one step per line (newline-separated), code in backticks"
+    )
     next_steps: list[str] = Field(..., description="Ordered debugging steps, max 5")
     matched_incident_ids: list[int] = Field(
         ..., description="IDs of past incidents that actually informed this answer"

@@ -1,0 +1,30 @@
+[
+  {
+    "name": "Redis failover",
+    "log": "2025-08-09T07:21:33Z ERROR rate-limiter\nTraceback (most recent call last):\n  File \"/app/limiter/bucket.py\", line 52, in take\n    count = self.redis.incr(key)\n  File \"/usr/local/lib/python3.12/site-packages/redis/connection.py\", line 707, in connect\n    raise ConnectionError(self._error_message(e))\nredis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused."
+  },
+  {
+    "name": "Pod OOMKilled",
+    "log": "Name: pdf-renderer-7c4b9d8f6-qq9zt\nState: Waiting\n  Reason: CrashLoopBackOff\nLast State: Terminated\n  Reason: OOMKilled\n  Exit Code: 137\nRestart Count: 12\nLimits:\n  memory: 256Mi\nEvents:\n  Warning BackOff kubelet Back-off restarting failed container pdf-renderer"
+  },
+  {
+    "name": "npm lockfile drift",
+    "log": "Run npm ci\nnpm ERR! code EUSAGE\nnpm ERR! `npm ci` can only install packages when your package.json and package-lock.json or npm-shrinkwrap.json are in sync. Please update your lock file with `npm install` before continuing.\nnpm ERR! Invalid: lock file's zod@3.22.0 does not satisfy zod@3.23.8\nError: Process completed with exit code 1."
+  },
+  {
+    "name": "Expired TLS cert",
+    "log": "2025-09-30T23:59:58Z ERROR ledger-sync upstream call failed\nhttpx.ConnectError: [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: certificate has expired (_ssl.c:1000)\n  url=https://ledger.internal.acme.io/v1/entries"
+  },
+  {
+    "name": "Kafka rebalance",
+    "log": "2025-05-14 09:12:00,101 WARN  o.a.k.c.c.i.ConsumerCoordinator - [Consumer clientId=audit-consumer-1, groupId=audit] Offset commit failed on partition audit-2 at offset 44120\norg.apache.kafka.clients.consumer.CommitFailedException: Commit cannot be completed since the group has already rebalanced and assigned the partitions to another member. This means that the time between subsequent calls to poll() was longer than the configured max.poll.interval.ms"
+  },
+  {
+    "name": "Go concurrent map",
+    "log": "fatal error: concurrent map read and map write\n\ngoroutine 45 [running]:\ninternal/runtime/maps.fatal({0x8a1f2b?, 0x0?})\ngithub.com/acme/featureflags.(*Store).Get(...)\n\t/src/store.go:22"
+  },
+  {
+    "name": "No match: Rust compile error",
+    "log": "error[E0382]: borrow of moved value: `config`\n  --> src/main.rs:41:20\n   |\n38 |     let server = Server::new(config);\n   |                              ------ value moved here\n41 |     println!(\"{:?}\", config.port);\n   |                    ^^^^^^^^^^^ value borrowed here after move"
+  }
+]

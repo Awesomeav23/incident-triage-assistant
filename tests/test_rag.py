@@ -102,3 +102,63 @@ def test_min_similarity_filters_weak_matches(store):
 def test_invalid_mode_rejected(store):
     with pytest.raises(ValueError):
         store.search(get_embedder().embed("x" * 20), 1, mode="fuzzy")
+
+
+@db
+def test_list_filters_and_paginates(store):
+    items, total = store.list(limit=10)
+    assert total == 47 and len(items) == 10
+    assert [i.id for i in items] == sorted((i.id for i in items), reverse=True)  # newest first
+    page2, _ = store.list(limit=10, offset=10)
+    assert not {i.id for i in items} & {i.id for i in page2}
+    crit, n_crit = store.list(severity="critical", limit=100)
+    assert n_crit == len(crit) > 0 and all(i.severity.value == "critical" for i in crit)
+    redis, _ = store.list(q="redis", limit=100)
+    assert redis and all("redis" in (i.title + i.service + i.error_type + (i.family or "")).lower() for i in redis)
+
+
+@db
+def test_list_can_hide_synthetic_recurrences(full_store):
+    _, everything = full_store.list(limit=1)
+    real, n_real = full_store.list(limit=100, include_synthetic=False)
+    assert everything == 235 and n_real == 47 and not any(i.synthetic for i in real)
+
+
+@db
+def test_list_search_treats_wildcards_literally(store):
+    assert store.list(q="%")[1] == 0  # no incident contains a literal %
+    items, n = store.list(q="_", limit=100)  # unescaped, "_" would match all 47
+    assert 0 < n < 47
+    assert all("_" in (i.title + i.service + i.error_type + (i.family or "")) for i in items)
+
+
+@db
+def test_get_returns_detail_or_none(store):
+    first = store.list(limit=1)[0][0]
+    detail = store.get(first.id)
+    assert detail and detail.log_text and detail.root_cause and detail.fix
+    assert store.get(10_000_000) is None
+
+
+@pytest.fixture(scope="module")
+def full_store():
+    """All 235 incidents, including the synthetic recurrences."""
+    s = IncidentStore(TEST_DSN)
+    s.truncate()
+    emb = get_embedder()
+    for r in json.load(open("data/incidents_expanded.json")):
+        s.add(IncidentIn(**r), emb.embed(r["log_text"]))
+    yield s
+    s.truncate()
+
+
+@db
+@pytest.mark.parametrize("mode", ["vector", "hybrid"])
+def test_distinct_families_returns_k_different_causes(full_store, mode):
+    log = "redis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused."
+    vec = get_embedder().embed(log)
+    plain = full_store.search(vec, 3, mode=mode, query_text=log)
+    distinct = full_store.search(vec, 3, mode=mode, query_text=log, distinct_families=True)
+    assert len({r.family for r in plain}) < 3  # recurrences crowd the plain top 3
+    assert len(distinct) == 3 and len({r.family for r in distinct}) == 3
+    assert distinct[0].family == plain[0].family == "redis-failover-refused"

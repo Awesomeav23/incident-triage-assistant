@@ -1,15 +1,26 @@
-"""FastAPI routes: /triage, /index-incident, /health."""
+"""FastAPI routes: /triage, /index-incident, /incidents, /samples, /health."""
 
+import json
 import time
 from contextlib import asynccontextmanager
 from functools import lru_cache
 
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, Query
 
 from app import metrics
 from app.config import settings
 from app.llm import LLMConfigError, LLMError, Triager, get_triager
-from app.models import SEVERITY_SCORE, IncidentIn, IndexedIncident, TriageRequest, TriageResponse
+from app.models import (
+    SEVERITY_SCORE,
+    IncidentDetail,
+    IncidentIn,
+    IncidentPage,
+    IndexedIncident,
+    Sample,
+    Severity,
+    TriageRequest,
+    TriageResponse,
+)
 from app.rag import Embedder, IncidentStore, get_embedder
 from app.redact import redact
 
@@ -34,6 +45,42 @@ app = FastAPI(title="Incident Triage Assistant", version="0.1.0", lifespan=lifes
 @app.get("/health")
 def health(store: IncidentStore = Depends(get_store)):
     return {"status": "ok", "incidents_indexed": store.count()}
+
+
+@app.get("/incidents", response_model=IncidentPage)
+def list_incidents(
+    q: str | None = Query(None, max_length=100),
+    severity: Severity | None = None,
+    limit: int = Query(20, ge=1, le=100),
+    offset: int = Query(0, ge=0),
+    include_synthetic: bool = True,
+    store: IncidentStore = Depends(get_store),
+):
+    items, total = store.list(q=q, severity=severity.value if severity else None,
+                              limit=limit, offset=offset, include_synthetic=include_synthetic)
+    return IncidentPage(items=items, total=total)
+
+
+@app.get("/incidents/{incident_id}", response_model=IncidentDetail)
+def get_incident(incident_id: int, store: IncidentStore = Depends(get_store)):
+    inc = store.get(incident_id)
+    if inc is None:
+        raise HTTPException(status_code=404, detail="Incident not found")
+    return inc
+
+
+SAMPLES_FILE = "data/samples.json"
+
+
+@lru_cache(maxsize=1)
+def load_samples() -> list[Sample]:
+    return [Sample(**s) for s in json.load(open(SAMPLES_FILE))]
+
+
+@app.get("/samples", response_model=list[Sample])
+def samples():
+    """Held-out example logs for the UI's "Try a sample" buttons (never indexed)."""
+    return load_samples()
 
 
 @app.post("/index-incident", response_model=IndexedIncident, status_code=201)
@@ -61,7 +108,7 @@ def triage(
     t1 = time.perf_counter()
     similar = store.search(
         vec, req.top_k, mode=settings.search_mode, query_text=log,
-        min_similarity=settings.min_similarity,
+        min_similarity=settings.min_similarity, distinct_families=True,
     )
     t2 = time.perf_counter()
     try:

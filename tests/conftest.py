@@ -38,9 +38,11 @@ class FakeStore:
         self.added: list = []
         self.search_kwargs: dict = {}
 
-    def search(self, embedding, top_k, mode="vector", query_text=None, min_similarity=0.0):
+    def search(self, embedding, top_k, mode="vector", query_text=None, min_similarity=0.0,
+               distinct_families=False):
         self.search_kwargs = {"top_k": top_k, "mode": mode, "query_text": query_text,
-                              "min_similarity": min_similarity}
+                              "min_similarity": min_similarity,
+                              "distinct_families": distinct_families}
         return [r for r in self.results if r.similarity >= min_similarity][:top_k]
 
     def add(self, inc, embedding) -> int:

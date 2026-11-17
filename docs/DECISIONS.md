@@ -72,3 +72,9 @@ Short ADRs: what was chosen, why, and what it costs.
 - **Why:** lets people try the system without curl, and makes the AI's behaviour visible (matches, similarity, confidence, "no close match"). TypeScript types mirror the Pydantic schemas, so API drift shows up as compile errors.
 - **Alternatives:** plain HTML served by FastAPI (simplest, but gets messy past one page); Streamlit (fast, but a separate Python app that looks like a notebook demo).
 - **Cost:** a Node toolchain and a second container; about one day of work.
+
+### ADR-013 — One incident per failure family in triage results (Phase 4)
+- **Decision:** `/triage` asks search for the best-ranked incident from each family (`distinct_families=True`), over-fetching up to 40 candidates so k distinct families survive.
+- **Why:** the UI showed 3 copies of the same failure, which tells the engineer nothing new and gives Claude one data point three times. Distinct families give k different hypotheses.
+- **Result:** hybrid hit@3 0.957 → 0.979, MRR 0.950 → 0.957, hit@1 unchanged (eval run with `--no-distinct` reproduces the old numbers).
+- **Cost:** recurrences in other services are no longer shown side by side; the incidents page still lists them.

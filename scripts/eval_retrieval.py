@@ -30,13 +30,13 @@ def git_sha() -> str:
         return "unknown"
 
 
-def run_mode(store, embedder, queries, mode: str, k: int) -> dict:
+def run_mode(store, embedder, queries, mode: str, k: int, distinct: bool) -> dict:
     per_query, embed_ms, search_ms = [], [], []
     for q in queries:
         t0 = time.perf_counter()
         vec = embedder.embed(q["log"])
         t1 = time.perf_counter()
-        results = store.search(vec, k, mode=mode, query_text=q["log"])
+        results = store.search(vec, k, mode=mode, query_text=q["log"], distinct_families=distinct)
         t2 = time.perf_counter()
         embed_ms.append((t1 - t0) * 1000)
         search_ms.append((t2 - t1) * 1000)
@@ -96,6 +96,8 @@ def main() -> None:
     p.add_argument("--queries", default="data/eval_set.json")
     p.add_argument("--mode", choices=[*SEARCH_MODES, "all"], default="all")
     p.add_argument("--k", type=int, default=10, help="depth searched for MRR")
+    p.add_argument("--no-distinct", dest="distinct", action="store_false",
+                   help="rank raw incidents instead of one per family (what /triage does)")
     args = p.parse_args()
 
     queries = json.load(open(args.queries))
@@ -103,7 +105,7 @@ def main() -> None:
     store.search(embedder.embed("warm-up"), 1)  # warm model + pool
 
     modes = list(SEARCH_MODES) if args.mode == "all" else [args.mode]
-    runs = {m: run_mode(store, embedder, queries, m, args.k) for m in modes}
+    runs = {m: run_mode(store, embedder, queries, m, args.k, args.distinct) for m in modes}
     best_mode = max(modes, key=lambda m: (runs[m]["metrics"]["hit@1"], runs[m]["metrics"]["mrr"]))
     threshold = tune_threshold(runs[best_mode]["per_query"])
 
@@ -111,7 +113,7 @@ def main() -> None:
     out = {
         "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
         "git_sha": git_sha(),
-        "config": {"embed_model": settings.embed_model, "k": args.k},
+        "config": {"embed_model": settings.embed_model, "k": args.k, "distinct_families": args.distinct},
         "dataset": {"indexed": store.count(), "queries": len(queries),
                     "matchable": n_match, "no_match": len(queries) - n_match},
         "modes": {m: r["metrics"] for m, r in runs.items()},

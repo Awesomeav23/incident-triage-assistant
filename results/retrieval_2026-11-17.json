@@ -1,0 +1,1256 @@
+{
+  "run_at": "2026-11-17T21:10:10+00:00",
+  "git_sha": "fd4ae42",
+  "config": {
+    "embed_model": "BAAI/bge-small-en-v1.5",
+    "k": 10,
+    "distinct_families": true
+  },
+  "dataset": {
+    "indexed": 235,
+    "queries": 53,
+    "matchable": 47,
+    "no_match": 6
+  },
+  "modes": {
+    "vector": {
+      "hit@1": 0.894,
+      "hit@3": 0.957,
+      "mrr": 0.928,
+      "embed_ms_p50": 15.47,
+      "embed_ms_p95": 22.34,
+      "search_ms_p50": 4.01,
+      "search_ms_p95": 8.13
+    },
+    "keyword": {
+      "hit@1": 0.872,
+      "hit@3": 0.957,
+      "mrr": 0.915,
+      "embed_ms_p50": 14.17,
+      "embed_ms_p95": 24.41,
+      "search_ms_p50": 3.49,
+      "search_ms_p95": 7.26
+    },
+    "hybrid": {
+      "hit@1": 0.936,
+      "hit@3": 0.979,
+      "mrr": 0.957,
+      "embed_ms_p50": 14.01,
+      "embed_ms_p95": 21.48,
+      "search_ms_p50": 4.17,
+      "search_ms_p95": 5.52
+    }
+  },
+  "best_mode": "hybrid",
+  "threshold": {
+    "threshold": 0.73,
+    "rule": "highest cutoff keeping 100% of correct matches",
+    "correct_matches_kept": 1.0,
+    "no_match_rejected": 0.667,
+    "correct_sim_min": 0.731,
+    "no_match_sim_max": 0.777,
+    "curve": [
+      {
+        "t": 0.65,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.0
+      },
+      {
+        "t": 0.66,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.0
+      },
+      {
+        "t": 0.67,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.167
+      },
+      {
+        "t": 0.68,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.167
+      },
+      {
+        "t": 0.69,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.167
+      },
+      {
+        "t": 0.7,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.167
+      },
+      {
+        "t": 0.71,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.167
+      },
+      {
+        "t": 0.72,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.5
+      },
+      {
+        "t": 0.73,
+        "correct_kept": 1.0,
+        "no_match_rejected": 0.667
+      },
+      {
+        "t": 0.74,
+        "correct_kept": 0.955,
+        "no_match_rejected": 0.833
+      },
+      {
+        "t": 0.75,
+        "correct_kept": 0.955,
+        "no_match_rejected": 0.833
+      },
+      {
+        "t": 0.76,
+        "correct_kept": 0.955,
+        "no_match_rejected": 0.833
+      },
+      {
+        "t": 0.77,
+        "correct_kept": 0.932,
+        "no_match_rejected": 0.833
+      },
+      {
+        "t": 0.78,
+        "correct_kept": 0.886,
+        "no_match_rejected": 1.0
+      },
+      {
+        "t": 0.79,
+        "correct_kept": 0.818,
+        "no_match_rejected": 1.0
+      },
+      {
+        "t": 0.8,
+        "correct_kept": 0.773,
+        "no_match_rejected": 1.0
+      }
+    ]
+  },
+  "per_query": {
+    "vector": [
+      {
+        "name": "pool exhaustion, different service and pool size",
+        "expected": "pg-pool-exhaustion",
+        "rank": 1,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "NPE on null address, different getter",
+        "expected": "java-npe-missing-address",
+        "rank": 1,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.94
+      },
+      {
+        "name": "OOMKilled, different pod",
+        "expected": "k8s-oomkilled",
+        "rank": 1,
+        "top1_family": "k8s-oomkilled",
+        "max_similarity": 0.908
+      },
+      {
+        "name": "npm ci lockfile drift, different package",
+        "expected": "npm-lockfile-drift",
+        "rank": 1,
+        "top1_family": "npm-lockfile-drift",
+        "max_similarity": 0.913
+      },
+      {
+        "name": "redis refused, different host",
+        "expected": "redis-failover-refused",
+        "rank": 1,
+        "top1_family": "redis-failover-refused",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "expired cert via httpx",
+        "expected": "tls-cert-expired",
+        "rank": 2,
+        "top1_family": "tls-missing-ca-bundle",
+        "max_similarity": 0.9
+      },
+      {
+        "name": "unhandled rejection, ECONNRESET",
+        "expected": "node-unhandled-rejection",
+        "rank": 1,
+        "top1_family": "node-unhandled-rejection",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "terraform lock, different state path",
+        "expected": "terraform-state-lock",
+        "rank": 1,
+        "top1_family": "terraform-state-lock",
+        "max_similarity": 0.947
+      },
+      {
+        "name": "kafka max.poll.interval exceeded",
+        "expected": "kafka-rebalance-storm",
+        "rank": 1,
+        "top1_family": "kafka-rebalance-storm",
+        "max_similarity": 0.978
+      },
+      {
+        "name": "go nil map, different package",
+        "expected": "go-nil-map",
+        "rank": 1,
+        "top1_family": "go-nil-map",
+        "max_similarity": 0.922
+      },
+      {
+        "name": "S3 KMS access denied on GetObject",
+        "expected": "s3-kms-access-denied",
+        "rank": 2,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.916
+      },
+      {
+        "name": "WAL disk full",
+        "expected": "pg-wal-disk-full",
+        "rank": 1,
+        "top1_family": "pg-wal-disk-full",
+        "max_similarity": 0.991
+      },
+      {
+        "name": "liveness probe on slow start",
+        "expected": "k8s-liveness-slow-start",
+        "rank": 1,
+        "top1_family": "k8s-liveness-slow-start",
+        "max_similarity": 0.939
+      },
+      {
+        "name": "celery redelivery duplicate",
+        "expected": "celery-visibility-timeout",
+        "rank": 1,
+        "top1_family": "celery-visibility-timeout",
+        "max_similarity": 0.932
+      },
+      {
+        "name": "novel: segfault in native extension (no good match)",
+        "expected": null,
+        "rank": null,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.777
+      },
+      {
+        "name": "pg-too-many-clients (holdout)",
+        "expected": "pg-too-many-clients",
+        "rank": 1,
+        "top1_family": "pg-too-many-clients",
+        "max_similarity": 0.802
+      },
+      {
+        "name": "pg-statement-timeout (holdout)",
+        "expected": "pg-statement-timeout",
+        "rank": 1,
+        "top1_family": "pg-statement-timeout",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "redis-oom-maxmemory (holdout)",
+        "expected": "redis-oom-maxmemory",
+        "rank": 1,
+        "top1_family": "redis-oom-maxmemory",
+        "max_similarity": 0.895
+      },
+      {
+        "name": "redis-slow-command-timeout (holdout)",
+        "expected": "redis-slow-command-timeout",
+        "rank": 1,
+        "top1_family": "redis-slow-command-timeout",
+        "max_similarity": 0.757
+      },
+      {
+        "name": "k8s-imagepullbackoff (holdout)",
+        "expected": "k8s-imagepullbackoff",
+        "rank": 1,
+        "top1_family": "k8s-imagepullbackoff",
+        "max_similarity": 0.789
+      },
+      {
+        "name": "k8s-crashloop-missing-env (holdout)",
+        "expected": "k8s-crashloop-missing-env",
+        "rank": 9,
+        "top1_family": "tls-cert-expired",
+        "max_similarity": 0.732
+      },
+      {
+        "name": "k8s-pending-insufficient-cpu (holdout)",
+        "expected": "k8s-pending-insufficient-cpu",
+        "rank": 1,
+        "top1_family": "k8s-pending-insufficient-cpu",
+        "max_similarity": 0.833
+      },
+      {
+        "name": "java-heap-oom (holdout)",
+        "expected": "java-heap-oom",
+        "rank": 1,
+        "top1_family": "java-heap-oom",
+        "max_similarity": 0.82
+      },
+      {
+        "name": "node-heap-oom-build (holdout)",
+        "expected": "node-heap-oom-build",
+        "rank": 1,
+        "top1_family": "node-heap-oom-build",
+        "max_similarity": 0.77
+      },
+      {
+        "name": "npm-eresolve-peer (holdout)",
+        "expected": "npm-eresolve-peer",
+        "rank": 1,
+        "top1_family": "npm-eresolve-peer",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "tls-hostname-mismatch (holdout)",
+        "expected": "tls-hostname-mismatch",
+        "rank": 1,
+        "top1_family": "tls-hostname-mismatch",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "tls-missing-ca-bundle (holdout)",
+        "expected": "tls-missing-ca-bundle",
+        "rank": 1,
+        "top1_family": "tls-missing-ca-bundle",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "s3-bucket-policy-deny (holdout)",
+        "expected": "s3-bucket-policy-deny",
+        "rank": 1,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.814
+      },
+      {
+        "name": "aws-expired-token (holdout)",
+        "expected": "aws-expired-token",
+        "rank": 1,
+        "top1_family": "aws-expired-token",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "dynamodb-hot-partition (holdout)",
+        "expected": "dynamodb-hot-partition",
+        "rank": 1,
+        "top1_family": "dynamodb-hot-partition",
+        "max_similarity": 0.769
+      },
+      {
+        "name": "kafka-not-leader (holdout)",
+        "expected": "kafka-not-leader",
+        "rank": 1,
+        "top1_family": "kafka-not-leader",
+        "max_similarity": 0.809
+      },
+      {
+        "name": "go-nil-pointer-http (holdout)",
+        "expected": "go-nil-pointer-http",
+        "rank": 1,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.96
+      },
+      {
+        "name": "go-concurrent-map-writes (holdout)",
+        "expected": "go-concurrent-map-writes",
+        "rank": 1,
+        "top1_family": "go-concurrent-map-writes",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "terraform-provider-constraint (holdout)",
+        "expected": "terraform-provider-constraint",
+        "rank": 1,
+        "top1_family": "terraform-provider-constraint",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "gha-token-permissions (holdout)",
+        "expected": "gha-token-permissions",
+        "rank": 1,
+        "top1_family": "gha-token-permissions",
+        "max_similarity": 0.799
+      },
+      {
+        "name": "docker-base-image-missing (holdout)",
+        "expected": "docker-base-image-missing",
+        "rank": null,
+        "top1_family": "npm-lockfile-drift",
+        "max_similarity": 0.662
+      },
+      {
+        "name": "pytest-db-in-use (holdout)",
+        "expected": "pytest-db-in-use",
+        "rank": 1,
+        "top1_family": "pytest-db-in-use",
+        "max_similarity": 0.868
+      },
+      {
+        "name": "python-transitive-dep-break (holdout)",
+        "expected": "python-transitive-dep-break",
+        "rank": 1,
+        "top1_family": "python-transitive-dep-break",
+        "max_similarity": 0.739
+      },
+      {
+        "name": "celery-worker-sigkill (holdout)",
+        "expected": "celery-worker-sigkill",
+        "rank": 1,
+        "top1_family": "celery-worker-sigkill",
+        "max_similarity": 0.878
+      },
+      {
+        "name": "dns-ndots-coredns (holdout)",
+        "expected": "dns-ndots-coredns",
+        "rank": 1,
+        "top1_family": "dns-ndots-coredns",
+        "max_similarity": 0.797
+      },
+      {
+        "name": "lambda-oom (holdout)",
+        "expected": "lambda-oom",
+        "rank": 1,
+        "top1_family": "lambda-oom",
+        "max_similarity": 0.919
+      },
+      {
+        "name": "alembic-multiple-heads (holdout)",
+        "expected": "alembic-multiple-heads",
+        "rank": 2,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.731
+      },
+      {
+        "name": "pip install, disk full on runner",
+        "expected": "docker-no-space",
+        "rank": 1,
+        "top1_family": "docker-no-space",
+        "max_similarity": 0.773
+      },
+      {
+        "name": "date assertion off by one day",
+        "expected": "pytest-timezone-flaky",
+        "rank": 1,
+        "top1_family": "pytest-timezone-flaky",
+        "max_similarity": 0.853
+      },
+      {
+        "name": "deadlock during schema migration",
+        "expected": "pg-migration-deadlock",
+        "rank": 1,
+        "top1_family": "pg-migration-deadlock",
+        "max_similarity": 0.848
+      },
+      {
+        "name": "lambda timed out on outbound call",
+        "expected": "lambda-timeout",
+        "rank": 1,
+        "top1_family": "lambda-timeout",
+        "max_similarity": 0.876
+      },
+      {
+        "name": "TS2532 possibly undefined",
+        "expected": "ts-strict-null",
+        "rank": 1,
+        "top1_family": "ts-strict-null",
+        "max_similarity": 0.84
+      },
+      {
+        "name": "GitHub API secondary rate limit",
+        "expected": "github-rate-limit",
+        "rank": 1,
+        "top1_family": "github-rate-limit",
+        "max_similarity": 0.843
+      },
+      {
+        "name": "novel: rust borrow checker",
+        "expected": null,
+        "rank": null,
+        "top1_family": "java-heap-oom",
+        "max_similarity": 0.716
+      },
+      {
+        "name": "novel: iOS code signing",
+        "expected": null,
+        "rank": null,
+        "top1_family": "tls-hostname-mismatch",
+        "max_similarity": 0.668
+      },
+      {
+        "name": "novel: gradle dependency not found",
+        "expected": null,
+        "rank": null,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.715
+      },
+      {
+        "name": "novel: utf-8 decode error in CSV",
+        "expected": null,
+        "rank": null,
+        "top1_family": "python-transitive-dep-break",
+        "max_similarity": 0.72
+      },
+      {
+        "name": "novel: cron script permission denied",
+        "expected": null,
+        "rank": null,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.734
+      }
+    ],
+    "keyword": [
+      {
+        "name": "pool exhaustion, different service and pool size",
+        "expected": "pg-pool-exhaustion",
+        "rank": 1,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "NPE on null address, different getter",
+        "expected": "java-npe-missing-address",
+        "rank": 1,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.94
+      },
+      {
+        "name": "OOMKilled, different pod",
+        "expected": "k8s-oomkilled",
+        "rank": 1,
+        "top1_family": "k8s-oomkilled",
+        "max_similarity": 0.908
+      },
+      {
+        "name": "npm ci lockfile drift, different package",
+        "expected": "npm-lockfile-drift",
+        "rank": 1,
+        "top1_family": "npm-lockfile-drift",
+        "max_similarity": 0.913
+      },
+      {
+        "name": "redis refused, different host",
+        "expected": "redis-failover-refused",
+        "rank": 1,
+        "top1_family": "redis-failover-refused",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "expired cert via httpx",
+        "expected": "tls-cert-expired",
+        "rank": 1,
+        "top1_family": "tls-cert-expired",
+        "max_similarity": 0.9
+      },
+      {
+        "name": "unhandled rejection, ECONNRESET",
+        "expected": "node-unhandled-rejection",
+        "rank": 1,
+        "top1_family": "node-unhandled-rejection",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "terraform lock, different state path",
+        "expected": "terraform-state-lock",
+        "rank": 1,
+        "top1_family": "terraform-state-lock",
+        "max_similarity": 0.947
+      },
+      {
+        "name": "kafka max.poll.interval exceeded",
+        "expected": "kafka-rebalance-storm",
+        "rank": 1,
+        "top1_family": "kafka-rebalance-storm",
+        "max_similarity": 0.978
+      },
+      {
+        "name": "go nil map, different package",
+        "expected": "go-nil-map",
+        "rank": 1,
+        "top1_family": "go-nil-map",
+        "max_similarity": 0.922
+      },
+      {
+        "name": "S3 KMS access denied on GetObject",
+        "expected": "s3-kms-access-denied",
+        "rank": 1,
+        "top1_family": "s3-kms-access-denied",
+        "max_similarity": 0.916
+      },
+      {
+        "name": "WAL disk full",
+        "expected": "pg-wal-disk-full",
+        "rank": 1,
+        "top1_family": "pg-wal-disk-full",
+        "max_similarity": 0.991
+      },
+      {
+        "name": "liveness probe on slow start",
+        "expected": "k8s-liveness-slow-start",
+        "rank": 1,
+        "top1_family": "k8s-liveness-slow-start",
+        "max_similarity": 0.939
+      },
+      {
+        "name": "celery redelivery duplicate",
+        "expected": "celery-visibility-timeout",
+        "rank": 1,
+        "top1_family": "celery-visibility-timeout",
+        "max_similarity": 0.932
+      },
+      {
+        "name": "novel: segfault in native extension (no good match)",
+        "expected": null,
+        "rank": null,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.777
+      },
+      {
+        "name": "pg-too-many-clients (holdout)",
+        "expected": "pg-too-many-clients",
+        "rank": 1,
+        "top1_family": "pg-too-many-clients",
+        "max_similarity": 0.802
+      },
+      {
+        "name": "pg-statement-timeout (holdout)",
+        "expected": "pg-statement-timeout",
+        "rank": 1,
+        "top1_family": "pg-statement-timeout",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "redis-oom-maxmemory (holdout)",
+        "expected": "redis-oom-maxmemory",
+        "rank": 1,
+        "top1_family": "redis-oom-maxmemory",
+        "max_similarity": 0.895
+      },
+      {
+        "name": "redis-slow-command-timeout (holdout)",
+        "expected": "redis-slow-command-timeout",
+        "rank": null,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.757
+      },
+      {
+        "name": "k8s-imagepullbackoff (holdout)",
+        "expected": "k8s-imagepullbackoff",
+        "rank": 1,
+        "top1_family": "k8s-imagepullbackoff",
+        "max_similarity": 0.789
+      },
+      {
+        "name": "k8s-crashloop-missing-env (holdout)",
+        "expected": "k8s-crashloop-missing-env",
+        "rank": 1,
+        "top1_family": "k8s-crashloop-missing-env",
+        "max_similarity": 0.732
+      },
+      {
+        "name": "k8s-pending-insufficient-cpu (holdout)",
+        "expected": "k8s-pending-insufficient-cpu",
+        "rank": 1,
+        "top1_family": "k8s-pending-insufficient-cpu",
+        "max_similarity": 0.833
+      },
+      {
+        "name": "java-heap-oom (holdout)",
+        "expected": "java-heap-oom",
+        "rank": 1,
+        "top1_family": "java-heap-oom",
+        "max_similarity": 0.82
+      },
+      {
+        "name": "node-heap-oom-build (holdout)",
+        "expected": "node-heap-oom-build",
+        "rank": 1,
+        "top1_family": "node-heap-oom-build",
+        "max_similarity": 0.77
+      },
+      {
+        "name": "npm-eresolve-peer (holdout)",
+        "expected": "npm-eresolve-peer",
+        "rank": 1,
+        "top1_family": "npm-eresolve-peer",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "tls-hostname-mismatch (holdout)",
+        "expected": "tls-hostname-mismatch",
+        "rank": 2,
+        "top1_family": "tls-cert-expired",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "tls-missing-ca-bundle (holdout)",
+        "expected": "tls-missing-ca-bundle",
+        "rank": 1,
+        "top1_family": "tls-missing-ca-bundle",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "s3-bucket-policy-deny (holdout)",
+        "expected": "s3-bucket-policy-deny",
+        "rank": 1,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.814
+      },
+      {
+        "name": "aws-expired-token (holdout)",
+        "expected": "aws-expired-token",
+        "rank": 1,
+        "top1_family": "aws-expired-token",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "dynamodb-hot-partition (holdout)",
+        "expected": "dynamodb-hot-partition",
+        "rank": 2,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.769
+      },
+      {
+        "name": "kafka-not-leader (holdout)",
+        "expected": "kafka-not-leader",
+        "rank": 2,
+        "top1_family": "k8s-imagepullbackoff",
+        "max_similarity": 0.809
+      },
+      {
+        "name": "go-nil-pointer-http (holdout)",
+        "expected": "go-nil-pointer-http",
+        "rank": 1,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.96
+      },
+      {
+        "name": "go-concurrent-map-writes (holdout)",
+        "expected": "go-concurrent-map-writes",
+        "rank": 1,
+        "top1_family": "go-concurrent-map-writes",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "terraform-provider-constraint (holdout)",
+        "expected": "terraform-provider-constraint",
+        "rank": 1,
+        "top1_family": "terraform-provider-constraint",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "gha-token-permissions (holdout)",
+        "expected": "gha-token-permissions",
+        "rank": 1,
+        "top1_family": "gha-token-permissions",
+        "max_similarity": 0.799
+      },
+      {
+        "name": "docker-base-image-missing (holdout)",
+        "expected": "docker-base-image-missing",
+        "rank": null,
+        "top1_family": "ts-strict-null",
+        "max_similarity": 0.662
+      },
+      {
+        "name": "pytest-db-in-use (holdout)",
+        "expected": "pytest-db-in-use",
+        "rank": 1,
+        "top1_family": "pytest-db-in-use",
+        "max_similarity": 0.868
+      },
+      {
+        "name": "python-transitive-dep-break (holdout)",
+        "expected": "python-transitive-dep-break",
+        "rank": 1,
+        "top1_family": "python-transitive-dep-break",
+        "max_similarity": 0.739
+      },
+      {
+        "name": "celery-worker-sigkill (holdout)",
+        "expected": "celery-worker-sigkill",
+        "rank": 1,
+        "top1_family": "celery-worker-sigkill",
+        "max_similarity": 0.878
+      },
+      {
+        "name": "dns-ndots-coredns (holdout)",
+        "expected": "dns-ndots-coredns",
+        "rank": 1,
+        "top1_family": "dns-ndots-coredns",
+        "max_similarity": 0.797
+      },
+      {
+        "name": "lambda-oom (holdout)",
+        "expected": "lambda-oom",
+        "rank": 1,
+        "top1_family": "lambda-oom",
+        "max_similarity": 0.919
+      },
+      {
+        "name": "alembic-multiple-heads (holdout)",
+        "expected": "alembic-multiple-heads",
+        "rank": 2,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.731
+      },
+      {
+        "name": "pip install, disk full on runner",
+        "expected": "docker-no-space",
+        "rank": 1,
+        "top1_family": "docker-no-space",
+        "max_similarity": 0.773
+      },
+      {
+        "name": "date assertion off by one day",
+        "expected": "pytest-timezone-flaky",
+        "rank": 1,
+        "top1_family": "pytest-timezone-flaky",
+        "max_similarity": 0.853
+      },
+      {
+        "name": "deadlock during schema migration",
+        "expected": "pg-migration-deadlock",
+        "rank": 1,
+        "top1_family": "pg-migration-deadlock",
+        "max_similarity": 0.848
+      },
+      {
+        "name": "lambda timed out on outbound call",
+        "expected": "lambda-timeout",
+        "rank": 1,
+        "top1_family": "lambda-timeout",
+        "max_similarity": 0.876
+      },
+      {
+        "name": "TS2532 possibly undefined",
+        "expected": "ts-strict-null",
+        "rank": 1,
+        "top1_family": "ts-strict-null",
+        "max_similarity": 0.84
+      },
+      {
+        "name": "GitHub API secondary rate limit",
+        "expected": "github-rate-limit",
+        "rank": 1,
+        "top1_family": "github-rate-limit",
+        "max_similarity": 0.843
+      },
+      {
+        "name": "novel: rust borrow checker",
+        "expected": null,
+        "rank": null,
+        "top1_family": "go-nil-map",
+        "max_similarity": 0.716
+      },
+      {
+        "name": "novel: iOS code signing",
+        "expected": null,
+        "rank": null,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.668
+      },
+      {
+        "name": "novel: gradle dependency not found",
+        "expected": null,
+        "rank": null,
+        "top1_family": "docker-no-space",
+        "max_similarity": 0.715
+      },
+      {
+        "name": "novel: utf-8 decode error in CSV",
+        "expected": null,
+        "rank": null,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.72
+      },
+      {
+        "name": "novel: cron script permission denied",
+        "expected": null,
+        "rank": null,
+        "top1_family": "docker-no-space",
+        "max_similarity": 0.734
+      }
+    ],
+    "hybrid": [
+      {
+        "name": "pool exhaustion, different service and pool size",
+        "expected": "pg-pool-exhaustion",
+        "rank": 1,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "NPE on null address, different getter",
+        "expected": "java-npe-missing-address",
+        "rank": 1,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.94
+      },
+      {
+        "name": "OOMKilled, different pod",
+        "expected": "k8s-oomkilled",
+        "rank": 1,
+        "top1_family": "k8s-oomkilled",
+        "max_similarity": 0.908
+      },
+      {
+        "name": "npm ci lockfile drift, different package",
+        "expected": "npm-lockfile-drift",
+        "rank": 1,
+        "top1_family": "npm-lockfile-drift",
+        "max_similarity": 0.913
+      },
+      {
+        "name": "redis refused, different host",
+        "expected": "redis-failover-refused",
+        "rank": 1,
+        "top1_family": "redis-failover-refused",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "expired cert via httpx",
+        "expected": "tls-cert-expired",
+        "rank": 1,
+        "top1_family": "tls-cert-expired",
+        "max_similarity": 0.9
+      },
+      {
+        "name": "unhandled rejection, ECONNRESET",
+        "expected": "node-unhandled-rejection",
+        "rank": 1,
+        "top1_family": "node-unhandled-rejection",
+        "max_similarity": 0.901
+      },
+      {
+        "name": "terraform lock, different state path",
+        "expected": "terraform-state-lock",
+        "rank": 1,
+        "top1_family": "terraform-state-lock",
+        "max_similarity": 0.947
+      },
+      {
+        "name": "kafka max.poll.interval exceeded",
+        "expected": "kafka-rebalance-storm",
+        "rank": 1,
+        "top1_family": "kafka-rebalance-storm",
+        "max_similarity": 0.978
+      },
+      {
+        "name": "go nil map, different package",
+        "expected": "go-nil-map",
+        "rank": 1,
+        "top1_family": "go-nil-map",
+        "max_similarity": 0.922
+      },
+      {
+        "name": "S3 KMS access denied on GetObject",
+        "expected": "s3-kms-access-denied",
+        "rank": 1,
+        "top1_family": "s3-kms-access-denied",
+        "max_similarity": 0.916
+      },
+      {
+        "name": "WAL disk full",
+        "expected": "pg-wal-disk-full",
+        "rank": 1,
+        "top1_family": "pg-wal-disk-full",
+        "max_similarity": 0.991
+      },
+      {
+        "name": "liveness probe on slow start",
+        "expected": "k8s-liveness-slow-start",
+        "rank": 1,
+        "top1_family": "k8s-liveness-slow-start",
+        "max_similarity": 0.939
+      },
+      {
+        "name": "celery redelivery duplicate",
+        "expected": "celery-visibility-timeout",
+        "rank": 1,
+        "top1_family": "celery-visibility-timeout",
+        "max_similarity": 0.932
+      },
+      {
+        "name": "novel: segfault in native extension (no good match)",
+        "expected": null,
+        "rank": null,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.777
+      },
+      {
+        "name": "pg-too-many-clients (holdout)",
+        "expected": "pg-too-many-clients",
+        "rank": 1,
+        "top1_family": "pg-too-many-clients",
+        "max_similarity": 0.802
+      },
+      {
+        "name": "pg-statement-timeout (holdout)",
+        "expected": "pg-statement-timeout",
+        "rank": 1,
+        "top1_family": "pg-statement-timeout",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "redis-oom-maxmemory (holdout)",
+        "expected": "redis-oom-maxmemory",
+        "rank": 1,
+        "top1_family": "redis-oom-maxmemory",
+        "max_similarity": 0.895
+      },
+      {
+        "name": "redis-slow-command-timeout (holdout)",
+        "expected": "redis-slow-command-timeout",
+        "rank": 2,
+        "top1_family": "pg-pool-exhaustion",
+        "max_similarity": 0.757
+      },
+      {
+        "name": "k8s-imagepullbackoff (holdout)",
+        "expected": "k8s-imagepullbackoff",
+        "rank": 1,
+        "top1_family": "k8s-imagepullbackoff",
+        "max_similarity": 0.789
+      },
+      {
+        "name": "k8s-crashloop-missing-env (holdout)",
+        "expected": "k8s-crashloop-missing-env",
+        "rank": 2,
+        "top1_family": "tls-cert-expired",
+        "max_similarity": 0.732
+      },
+      {
+        "name": "k8s-pending-insufficient-cpu (holdout)",
+        "expected": "k8s-pending-insufficient-cpu",
+        "rank": 1,
+        "top1_family": "k8s-pending-insufficient-cpu",
+        "max_similarity": 0.833
+      },
+      {
+        "name": "java-heap-oom (holdout)",
+        "expected": "java-heap-oom",
+        "rank": 1,
+        "top1_family": "java-heap-oom",
+        "max_similarity": 0.82
+      },
+      {
+        "name": "node-heap-oom-build (holdout)",
+        "expected": "node-heap-oom-build",
+        "rank": 1,
+        "top1_family": "node-heap-oom-build",
+        "max_similarity": 0.77
+      },
+      {
+        "name": "npm-eresolve-peer (holdout)",
+        "expected": "npm-eresolve-peer",
+        "rank": 1,
+        "top1_family": "npm-eresolve-peer",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "tls-hostname-mismatch (holdout)",
+        "expected": "tls-hostname-mismatch",
+        "rank": 1,
+        "top1_family": "tls-hostname-mismatch",
+        "max_similarity": 0.782
+      },
+      {
+        "name": "tls-missing-ca-bundle (holdout)",
+        "expected": "tls-missing-ca-bundle",
+        "rank": 1,
+        "top1_family": "tls-missing-ca-bundle",
+        "max_similarity": 0.845
+      },
+      {
+        "name": "s3-bucket-policy-deny (holdout)",
+        "expected": "s3-bucket-policy-deny",
+        "rank": 1,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.814
+      },
+      {
+        "name": "aws-expired-token (holdout)",
+        "expected": "aws-expired-token",
+        "rank": 1,
+        "top1_family": "aws-expired-token",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "dynamodb-hot-partition (holdout)",
+        "expected": "dynamodb-hot-partition",
+        "rank": 1,
+        "top1_family": "dynamodb-hot-partition",
+        "max_similarity": 0.769
+      },
+      {
+        "name": "kafka-not-leader (holdout)",
+        "expected": "kafka-not-leader",
+        "rank": 1,
+        "top1_family": "kafka-not-leader",
+        "max_similarity": 0.809
+      },
+      {
+        "name": "go-nil-pointer-http (holdout)",
+        "expected": "go-nil-pointer-http",
+        "rank": 1,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.96
+      },
+      {
+        "name": "go-concurrent-map-writes (holdout)",
+        "expected": "go-concurrent-map-writes",
+        "rank": 1,
+        "top1_family": "go-concurrent-map-writes",
+        "max_similarity": 0.927
+      },
+      {
+        "name": "terraform-provider-constraint (holdout)",
+        "expected": "terraform-provider-constraint",
+        "rank": 1,
+        "top1_family": "terraform-provider-constraint",
+        "max_similarity": 0.841
+      },
+      {
+        "name": "gha-token-permissions (holdout)",
+        "expected": "gha-token-permissions",
+        "rank": 1,
+        "top1_family": "gha-token-permissions",
+        "max_similarity": 0.799
+      },
+      {
+        "name": "docker-base-image-missing (holdout)",
+        "expected": "docker-base-image-missing",
+        "rank": null,
+        "top1_family": "npm-lockfile-drift",
+        "max_similarity": 0.662
+      },
+      {
+        "name": "pytest-db-in-use (holdout)",
+        "expected": "pytest-db-in-use",
+        "rank": 1,
+        "top1_family": "pytest-db-in-use",
+        "max_similarity": 0.868
+      },
+      {
+        "name": "python-transitive-dep-break (holdout)",
+        "expected": "python-transitive-dep-break",
+        "rank": 1,
+        "top1_family": "python-transitive-dep-break",
+        "max_similarity": 0.739
+      },
+      {
+        "name": "celery-worker-sigkill (holdout)",
+        "expected": "celery-worker-sigkill",
+        "rank": 1,
+        "top1_family": "celery-worker-sigkill",
+        "max_similarity": 0.878
+      },
+      {
+        "name": "dns-ndots-coredns (holdout)",
+        "expected": "dns-ndots-coredns",
+        "rank": 1,
+        "top1_family": "dns-ndots-coredns",
+        "max_similarity": 0.797
+      },
+      {
+        "name": "lambda-oom (holdout)",
+        "expected": "lambda-oom",
+        "rank": 1,
+        "top1_family": "lambda-oom",
+        "max_similarity": 0.919
+      },
+      {
+        "name": "alembic-multiple-heads (holdout)",
+        "expected": "alembic-multiple-heads",
+        "rank": 1,
+        "top1_family": "alembic-multiple-heads",
+        "max_similarity": 0.731
+      },
+      {
+        "name": "pip install, disk full on runner",
+        "expected": "docker-no-space",
+        "rank": 1,
+        "top1_family": "docker-no-space",
+        "max_similarity": 0.773
+      },
+      {
+        "name": "date assertion off by one day",
+        "expected": "pytest-timezone-flaky",
+        "rank": 1,
+        "top1_family": "pytest-timezone-flaky",
+        "max_similarity": 0.853
+      },
+      {
+        "name": "deadlock during schema migration",
+        "expected": "pg-migration-deadlock",
+        "rank": 1,
+        "top1_family": "pg-migration-deadlock",
+        "max_similarity": 0.848
+      },
+      {
+        "name": "lambda timed out on outbound call",
+        "expected": "lambda-timeout",
+        "rank": 1,
+        "top1_family": "lambda-timeout",
+        "max_similarity": 0.876
+      },
+      {
+        "name": "TS2532 possibly undefined",
+        "expected": "ts-strict-null",
+        "rank": 1,
+        "top1_family": "ts-strict-null",
+        "max_similarity": 0.84
+      },
+      {
+        "name": "GitHub API secondary rate limit",
+        "expected": "github-rate-limit",
+        "rank": 1,
+        "top1_family": "github-rate-limit",
+        "max_similarity": 0.843
+      },
+      {
+        "name": "novel: rust borrow checker",
+        "expected": null,
+        "rank": null,
+        "top1_family": "tls-hostname-mismatch",
+        "max_similarity": 0.716
+      },
+      {
+        "name": "novel: iOS code signing",
+        "expected": null,
+        "rank": null,
+        "top1_family": "tls-hostname-mismatch",
+        "max_similarity": 0.668
+      },
+      {
+        "name": "novel: gradle dependency not found",
+        "expected": null,
+        "rank": null,
+        "top1_family": "java-npe-missing-address",
+        "max_similarity": 0.715
+      },
+      {
+        "name": "novel: utf-8 decode error in CSV",
+        "expected": null,
+        "rank": null,
+        "top1_family": "go-nil-pointer-http",
+        "max_similarity": 0.72
+      },
+      {
+        "name": "novel: cron script permission denied",
+        "expected": null,
+        "rank": null,
+        "top1_family": "s3-bucket-policy-deny",
+        "max_similarity": 0.734
+      }
+    ]
+  }
+}

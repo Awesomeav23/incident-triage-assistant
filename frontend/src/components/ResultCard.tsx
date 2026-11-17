@@ -1,0 +1,125 @@
+import { useState } from "react";
+import type { SimilarIncident, TriageResponse } from "../types";
+import { Card, LatencyBar, Meter, RichText, SeverityBadge } from "./ui";
+
+export function ResultCard({ result }: { result: TriageResponse }) {
+  const cited = new Set(result.matched_incident_ids);
+  return (
+    <div className="space-y-4" data-testid="result">
+      <Card>
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3">
+            <SeverityBadge severity={result.severity} size="lg" />
+            <span className="text-sm text-slate-500 dark:text-slate-400">score {result.severity_score}/5</span>
+          </div>
+          <div className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-300">
+            Confidence <Meter value={result.confidence} label="Confidence" tone="emerald" />
+          </div>
+        </div>
+        <p className="mt-2 text-sm text-slate-600 dark:text-slate-300">
+          <RichText text={result.severity_reason} />
+        </p>
+
+        {result.no_close_match && (
+          <p className="mt-3 rounded-lg bg-amber-50 px-3 py-2 text-sm text-amber-900 dark:bg-amber-950 dark:text-amber-200" data-testid="no-match">
+            No close match in past incidents — this answer is based on the log alone.
+          </p>
+        )}
+        {result.redacted_secrets > 0 && (
+          <p className="mt-3 rounded-lg bg-slate-100 px-3 py-2 text-sm text-slate-700 dark:bg-slate-800 dark:text-slate-200" data-testid="redacted">
+            🔒 {result.redacted_secrets} secret{result.redacted_secrets === 1 ? "" : "s"} redacted before analysis.
+          </p>
+        )}
+
+        <Section title="Root cause">
+          <RichText text={result.root_cause_summary} />
+        </Section>
+        <Section title="Suggested fix">
+          <RichText text={result.suggested_fix} />
+        </Section>
+        <Section title="Next steps">
+          <ol className="list-decimal space-y-1.5 pl-5">
+            {result.next_steps.map((s, i) => (
+              <li key={i}>
+                <RichText text={s} />
+              </li>
+            ))}
+          </ol>
+        </Section>
+      </Card>
+
+      <Card>
+        <h3 className="text-sm font-semibold">Similar past incidents</h3>
+        {result.similar_incidents.length === 0 ? (
+          <p className="mt-2 text-sm text-slate-500 dark:text-slate-400">None above the similarity threshold.</p>
+        ) : (
+          <ul className="mt-3 space-y-2">
+            {result.similar_incidents.map((inc) => (
+              <SimilarItem key={inc.id} inc={inc} cited={cited.has(inc.id)} />
+            ))}
+          </ul>
+        )}
+      </Card>
+
+      <Card>
+        <h3 className="mb-2 text-sm font-semibold">Latency</h3>
+        <LatencyBar latency={result.latency_ms} />
+        <p className="mt-2 text-xs text-slate-500 dark:text-slate-400">
+          {result.model} · {result.search_mode} search
+        </p>
+      </Card>
+    </div>
+  );
+}
+
+function Section({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <section className="mt-4">
+      <h3 className="mb-1 text-xs font-semibold uppercase tracking-wide text-slate-500 dark:text-slate-400">{title}</h3>
+      <div className="whitespace-pre-line text-[0.95rem] leading-relaxed">{children}</div>
+    </section>
+  );
+}
+
+function SimilarItem({ inc, cited }: { inc: SimilarIncident; cited: boolean }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <li className="rounded-lg border border-slate-200 dark:border-slate-800">
+      <button
+        type="button"
+        onClick={() => setOpen((o) => !o)}
+        className="flex w-full flex-col gap-2 px-3 py-2.5 text-left sm:flex-row sm:items-center sm:gap-3"
+        aria-expanded={open}
+      >
+        <span className="flex min-w-0 flex-1 items-start gap-2.5">
+          <SeverityBadge severity={inc.severity} />
+          <span className="min-w-0 text-sm font-medium">{inc.title}</span>
+        </span>
+        <span className="flex shrink-0 items-center gap-3 pl-0.5">
+          {cited && (
+            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-xs font-medium text-indigo-800 dark:bg-indigo-900 dark:text-indigo-100" data-testid="cited">
+              Cited by Claude
+            </span>
+          )}
+          <Meter value={inc.similarity} label="Similarity" />
+        </span>
+      </button>
+      {open && (
+        <div className="space-y-2 border-t border-slate-200 px-3 py-2.5 text-sm dark:border-slate-800">
+          <p className="text-xs text-slate-500 dark:text-slate-400">
+            {inc.service} · {inc.error_type}
+            {inc.family ? ` · ${inc.family}` : ""}
+          </p>
+          <p>
+            <span className="font-medium">Root cause: </span>
+            {inc.root_cause}
+          </p>
+          <p>
+            <span className="font-medium">Fix: </span>
+            {inc.fix}
+          </p>
+        </div>
+      )}
+    </li>
+  );
+}

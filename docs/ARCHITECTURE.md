@@ -49,7 +49,7 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 2. **Redact** secrets (Phase 3).
 3. **Fingerprint** — SHA-256 of the normalised log; if seen within the dedup window, return the cached result (Phase 6).
 4. **Embed** — normalised log → 384-dim vector (bge-small, local ONNX).
-5. **Search** — vector top-N + full-text top-N, merged with reciprocal rank fusion (Phase 2); drop matches below the similarity threshold.
+5. **Search** — vector top-N + full-text top-N, merged with reciprocal rank fusion (Phase 2); drop matches below the similarity threshold; keep the best incident per failure family (Phase 4, ADR-013).
 6. **LLM** — system prompt + `<past_incidents>` JSON + `<new_log>` → Claude → validated `LLMTriage`.
 7. **Guard** — remove cited IDs that weren't in the retrieved set.
 8. **Record** — store the triage run (Phase 6); publish metrics.
@@ -151,7 +151,7 @@ Also returned: `no_close_match`, `search_mode`, `redacted_secrets`.
 Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `503` Claude credentials missing, rejected or misconfigured.
 
 ### Phase 4 (for the web UI)
-- `GET /incidents?q=redis&severity=critical&limit=20&offset=0` → `{ "items": [...], "total": 214 }`
+- `GET /incidents?q=redis&severity=critical&limit=20&offset=0&include_synthetic=false` → `{ "items": [...], "total": 47 }`
 - `GET /incidents/{id}` → full incident including `log_text`
 - `GET /samples` → `[{ "name": "Redis failover", "log": "..." }]`
 
@@ -184,7 +184,7 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 
 ## 9. Web UI → API
 
-In development, Vite proxies `/api/*` to `http://localhost:8030` (prefix stripped). In Docker, nginx serves the built
+In development, Vite proxies `/api/*` to `http://127.0.0.1:8030` (prefix stripped; `127.0.0.1` because Node resolves `localhost` to IPv6 `::1`, which uvicorn doesn't listen on). In Docker, nginx serves the built
 files and proxies `/api/*` to the `api` container. The browser always talks to one origin, so the API needs no CORS setup.
 
 ## 10. Local ports

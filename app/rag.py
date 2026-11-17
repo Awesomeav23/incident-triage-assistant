@@ -11,7 +11,7 @@ from psycopg2.extras import RealDictCursor
 from psycopg2.pool import ThreadedConnectionPool
 
 from app.config import settings
-from app.models import IncidentIn, SimilarIncident
+from app.models import IncidentDetail, IncidentIn, IncidentSummary, SimilarIncident
 
 SCHEMA_SQL = f"""
 CREATE EXTENSION IF NOT EXISTS vector;
@@ -182,8 +182,12 @@ class IncidentStore:
         mode: str = "vector",
         query_text: str | None = None,
         min_similarity: float = 0.0,
+        distinct_families: bool = False,
     ) -> list[SimilarIncident]:
         """Top-k incidents. `similarity` is always cosine similarity, whatever the ranking.
+
+        distinct_families: keep only the best-ranked incident per failure family, so the
+        k slots show k different past causes instead of recurrences of one.
 
         vector  - pgvector cosine distance
         keyword - Postgres full-text (ts_rank over an OR-query of log tokens)
@@ -224,11 +228,62 @@ class IncidentStore:
                 FROM fused f JOIN incidents i USING (id)
                 ORDER BY f.score DESC, similarity DESC LIMIT %(k)s"""
 
-        params = {"q": embedding, "k": top_k, "tsq": tsq, "n": CANDIDATES, "rrf": RRF_K}
+        # Over-fetch when collapsing families so k distinct ones survive.
+        fetch = min(top_k * 8, 2 * CANDIDATES) if distinct_families else top_k
+        params = {"q": embedding, "k": fetch, "tsq": tsq, "n": CANDIDATES, "rrf": RRF_K}
         with self.conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, params)
             rows = cur.fetchall()
-        return [SimilarIncident(**r) for r in rows if r["similarity"] >= min_similarity]
+        results, seen = [], set()
+        for r in rows:
+            if r["similarity"] < min_similarity:
+                continue
+            if distinct_families:
+                key = r["family"] or f"id:{r['id']}"  # unlabelled incidents stand alone
+                if key in seen:
+                    continue
+                seen.add(key)
+            results.append(SimilarIncident(**r))
+            if len(results) == top_k:
+                break
+        return results
+
+    def list(
+        self, q: str | None = None, severity: str | None = None, limit: int = 20, offset: int = 0,
+        include_synthetic: bool = True,
+    ) -> tuple[list[IncidentSummary], int]:
+        """Newest first. `q` matches title, service, error type or family (case-insensitive)."""
+        where, params = [], {}
+        if q:
+            where.append("(title ILIKE %(q)s OR service ILIKE %(q)s OR error_type ILIKE %(q)s"
+                         " OR family ILIKE %(q)s)")
+            # escape LIKE wildcards so user input is matched literally
+            params["q"] = "%" + q.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+        if severity:
+            where.append("severity = %(sev)s")
+            params["sev"] = severity
+        if not include_synthetic:
+            where.append("NOT synthetic")
+        clause = ("WHERE " + " AND ".join(where)) if where else ""
+        with self.conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(f"SELECT count(*) AS n FROM incidents {clause}", params)
+            total = cur.fetchone()["n"]
+            cur.execute(
+                f"""SELECT id, title, service, error_type, severity, family, synthetic, tags
+                    FROM incidents {clause} ORDER BY id DESC LIMIT %(limit)s OFFSET %(offset)s""",
+                {**params, "limit": limit, "offset": offset},
+            )
+            return [IncidentSummary(**r) for r in cur.fetchall()], total
+
+    def get(self, incident_id: int) -> IncidentDetail | None:
+        with self.conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
+            cur.execute(
+                """SELECT id, title, service, error_type, severity, family, synthetic, tags,
+                          log_text, root_cause, fix FROM incidents WHERE id = %s""",
+                (incident_id,),
+            )
+            row = cur.fetchone()
+            return IncidentDetail(**row) if row else None
 
     def count(self) -> int:
         with self.conn() as c, c.cursor() as cur:
