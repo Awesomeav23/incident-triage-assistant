@@ -52,6 +52,7 @@ to Claude (retrieval-augmented generation).
 | FR-19 | `GET /incidents` (paginated, text + severity filter), `GET /incidents/{id}`, `GET /samples` | 4 |
 | FR-20 | Web UI shows loading, error (422/502 message) and "no close match" states clearly | 4 |
 | FR-21 | Web UI feedback buttons, duplicate badge, and stats page | 6 |
+| FR-22 | Demo mode (default): triage works with no paid API calls by reusing the closest past incident's diagnosis; every demo answer is labelled as not AI-generated. Real Claude triage only with `LLM_MODE=claude` | 4 |
 
 ## 5. Non-functional requirements
 
@@ -64,6 +65,7 @@ to Claude (retrieval-augmented generation).
 | NFR-5 | Log input is untrusted: prompt-injection text inside a log must not change the system's instructions | required |
 | NFR-6 | Max log size 50,000 chars; longer input rejected with 422 | required |
 | NFR-7 | Metrics publishing never fails a triage request | required |
+| NFR-10 | Nothing in the default setup, tests or CI spends money: paid calls need `LLM_MODE=claude` (app) or `RUN_LIVE=1` (tests) | required |
 | NFR-9 | Web UI usable at phone width and in light and dark mode | required |
 | NFR-8 | Every number in the README comes from a script in this repo that anyone can re-run | required |
 

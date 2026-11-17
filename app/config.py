@@ -9,6 +9,9 @@ class Settings:
     database_url: str = os.getenv(
         "DATABASE_URL", "postgresql://triage:triage@localhost:5438/triage"
     )
+    # "demo" (default, free): answers are assembled from the closest past incident, no API calls.
+    # "claude": real Claude triage, billed per call. Must be chosen explicitly.
+    llm_mode: str = os.getenv("LLM_MODE", "demo").strip().lower()
     claude_model: str = os.getenv("CLAUDE_MODEL", "claude-opus-5-5")
     # low effort keeps triage latency down; raise for harder logs
     claude_effort: str = os.getenv("CLAUDE_EFFORT", "low")

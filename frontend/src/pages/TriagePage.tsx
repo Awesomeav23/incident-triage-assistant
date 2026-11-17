@@ -49,7 +49,7 @@ export function TriagePage() {
         <div>
           <h1 className="text-xl font-semibold">Triage an error</h1>
           <p className="text-sm text-slate-600 dark:text-slate-400">
-            Paste a stack trace or failed CI log. It's matched against past resolved incidents, then Claude explains the likely root cause and fix.
+            Paste a stack trace or failed CI log. It's matched against past resolved incidents to find the likely root cause and fix.
           </p>
         </div>
 

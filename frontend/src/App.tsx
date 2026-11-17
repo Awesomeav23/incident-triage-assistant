@@ -42,12 +42,12 @@ function Tab({ to, children }: { to: string; children: string }) {
 }
 
 function HealthIndicator() {
-  const [state, setState] = useState<{ ok: boolean; count?: number } | null>(null);
+  const [state, setState] = useState<{ ok: boolean; count?: number; mode?: string } | null>(null);
   useEffect(() => {
     const check = () =>
       api
         .health()
-        .then((h) => setState({ ok: true, count: h.incidents_indexed }))
+        .then((h) => setState({ ok: true, count: h.incidents_indexed, mode: h.llm_mode }))
         .catch(() => setState({ ok: false }));
     check();
     const t = setInterval(check, 30_000);
@@ -55,9 +55,16 @@ function HealthIndicator() {
   }, []);
   if (!state) return null;
   return (
-    <span className="ml-auto flex items-center gap-2 text-xs text-slate-600 dark:text-slate-400" role="status">
-      <span className={`h-2 w-2 rounded-full ${state.ok ? "bg-emerald-500" : "bg-red-500"}`} />
-      {state.ok ? `${state.count} incidents indexed` : "API offline"}
+    <span className="ml-auto flex items-center gap-3 text-xs text-slate-600 dark:text-slate-400" role="status">
+      {state.mode === "demo" && (
+        <span className="rounded-full bg-amber-100 px-2 py-0.5 font-medium text-amber-900 dark:bg-amber-900 dark:text-amber-100" title="No AI calls, no cost">
+          Demo mode
+        </span>
+      )}
+      <span className="flex items-center gap-2">
+        <span className={`h-2 w-2 rounded-full ${state.ok ? "bg-emerald-500" : "bg-red-500"}`} />
+        {state.ok ? `${state.count} incidents indexed` : "API offline"}
+      </span>
     </span>
   );
 }

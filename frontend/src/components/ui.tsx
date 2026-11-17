@@ -48,7 +48,13 @@ const SEGMENTS = [
   { key: "llm", label: "Claude", color: "bg-indigo-500" },
 ] as const;
 
-export function LatencyBar({ latency }: { latency: { embed: number; search: number; llm: number; total: number } }) {
+export function LatencyBar({
+  latency,
+  answerLabel = "Claude",
+}: {
+  latency: { embed: number; search: number; llm: number; total: number };
+  answerLabel?: string;
+}) {
   const total = Math.max(latency.total, 1);
   return (
     <div>
@@ -65,7 +71,7 @@ export function LatencyBar({ latency }: { latency: { embed: number; search: numb
         {SEGMENTS.map((s) => (
           <span key={s.key} className="flex items-center gap-1.5">
             <span className={`inline-block h-2 w-2 rounded-full ${s.color}`} />
-            {s.label} {formatMs(latency[s.key])}
+            {s.key === "llm" ? answerLabel : s.label} {formatMs(latency[s.key])}
           </span>
         ))}
         <span className="font-medium text-slate-800 dark:text-slate-100">Total {formatMs(latency.total)}</span>

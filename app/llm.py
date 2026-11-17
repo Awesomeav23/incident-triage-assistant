@@ -8,7 +8,7 @@ from typing import Protocol
 import anthropic
 
 from app.config import settings
-from app.models import LLMTriage, SimilarIncident
+from app.models import LLMTriage, Severity, SimilarIncident
 
 SYSTEM_PROMPT = """You are an on-call incident triage assistant for a software engineering team.
 
@@ -141,6 +141,61 @@ class ClaudeTriager:
         return response.parsed_output
 
 
+DEMO_MODEL = "demo"
+
+
+class DemoTriager:
+    """Free stand-in for Claude: reuses the closest past incident's diagnosis.
+
+    No API calls, no cost. The UI labels every demo answer as not AI-generated.
+    """
+
+    model = DEMO_MODEL
+
+    def triage(self, log: str, similar: list[SimilarIncident]) -> LLMTriage:
+        if not similar:
+            return LLMTriage(
+                root_cause_summary=(
+                    "No past incident is similar enough to this log. Demo mode can only "
+                    "reuse past diagnoses, so there is nothing to suggest here."
+                ),
+                severity=Severity.medium,
+                severity_reason="Unknown: no similar past incident (demo mode default).",
+                suggested_fix="Investigate manually, or switch to `LLM_MODE=claude` for an AI analysis.",
+                next_steps=[
+                    "Read the first error line and the innermost stack frame.",
+                    "Search the incidents page for the error type.",
+                    "Once resolved, add it as a new incident so future logs match it.",
+                ],
+                matched_incident_ids=[],
+                confidence=0.1,
+            )
+        top = similar[0]
+        return LLMTriage(
+            root_cause_summary=(
+                f"Closest past incident: {top.title} "
+                f"({round(top.similarity * 100)}% similar). Its root cause was: {top.root_cause}"
+            ),
+            severity=top.severity,
+            severity_reason="Copied from the closest past incident (demo mode, not assessed by AI).",
+            suggested_fix=top.fix,
+            next_steps=[
+                f"Confirm this log shows the same failure as past incident #{top.id} ({top.title}).",
+                f"If it does, apply the same fix to {top.service if top.service else 'this service'}.",
+                "If it doesn't, check the other similar incidents below.",
+            ],
+            matched_incident_ids=[top.id],
+            confidence=round(min(top.similarity, 0.95), 2),
+        )
+
+
+def make_triager(mode: str) -> Triager:
+    """Only the exact word "claude" (any case/whitespace) enables paid calls."""
+    if mode.strip().lower() == "claude":
+        return ClaudeTriager()
+    return DemoTriager()  # anything else, including typos, stays free
+
+
 @lru_cache(maxsize=1)
 def get_triager() -> Triager:
-    return ClaudeTriager()
+    return make_triager(settings.llm_mode)

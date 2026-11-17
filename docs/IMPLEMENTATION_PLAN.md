@@ -111,6 +111,8 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - The incidents list was mostly synthetic copies; now hidden by default.
 - Vite's proxy failed with ECONNREFUSED: Node resolves `localhost` to IPv6 `::1` while uvicorn listens on IPv4. The proxy targets `127.0.0.1`.
 
+**Demo mode (added 2026-11-17, ADR-014):** `LLM_MODE=demo` is the default, so the UI, tests and CI never call Claude. Verified end to end: `/health` reports `llm_mode: demo`, a triage takes ~40 ms with 0 calls to Anthropic, and the UI labels the answer as not AI-generated (`docs/screenshots/triage-demo.png`). Backend 72 passed + 1 opt-in live test; frontend 21 passed.
+
 **Observed, for Phase 5:** Claude took **6.7–15 s** per triage (Opus 5.5, effort low) against the 2 s target. In one run Claude didn't cite the top-ranked OOMKilled incident for a different OOM log, and did in another — citation consistency is a Phase 5 metric.
 
 **Later phases add to the UI:** Phase 6 → feedback buttons (👍 / ✏️ correct it) and a Stats page; Phase 7 → the frontend in Docker (nginx serving the build, proxying `/api`); Phase 8 → frontend build + tests in CI.
@@ -128,7 +130,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - [ ] Optional: same eval on a second model via `CLAUDE_MODEL` to show the quality/latency trade-off
 
 **Acceptance criteria:** a baseline table committed; README draft cites it.
-**Needs:** `ANTHROPIC_API_KEY`. Cost estimate shown before running.
+**Needs:** `ANTHROPIC_API_KEY` **and the user's explicit go-ahead to spend** (~$3–4 per Opus run). The script, ground truth and rubric are built and tested with fakes first; the paid run waits for approval. Until then the README marks these numbers as pending.
 
 ---
 

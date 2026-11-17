@@ -17,7 +17,8 @@ python3.13 -m venv .venv && .venv/bin/pip install -r requirements.txt
 .venv/bin/python -m scripts.eval_retrieval     # compare vector / keyword / hybrid search
 .venv/bin/python -m pytest                     # 51 tests, no API key needed
 
-cp .env.example .env                           # add ANTHROPIC_API_KEY for real triage
+cp .env.example .env                           # LLM_MODE=demo by default: free, no Claude calls
+                                               # LLM_MODE=claude + ANTHROPIC_API_KEY for real triage (billed)
 .venv/bin/uvicorn app.main:app --port 8030 --env-file .env   # API docs: http://localhost:8030/docs
 
 cd frontend && npm install && npm run dev      # web UI: http://localhost:5181

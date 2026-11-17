@@ -44,7 +44,8 @@ app = FastAPI(title="Incident Triage Assistant", version="0.1.0", lifespan=lifes
 
 @app.get("/health")
 def health(store: IncidentStore = Depends(get_store)):
-    return {"status": "ok", "incidents_indexed": store.count()}
+    mode = "claude" if settings.llm_mode == "claude" else "demo"
+    return {"status": "ok", "incidents_indexed": store.count(), "llm_mode": mode}
 
 
 @app.get("/incidents", response_model=IncidentPage)

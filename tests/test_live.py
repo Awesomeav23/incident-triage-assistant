@@ -1,6 +1,6 @@
-"""One real Claude call. Skipped unless ANTHROPIC_API_KEY is set.
+"""One real Claude call (billed). Skipped unless you opt in explicitly.
 
-    ANTHROPIC_API_KEY=... pytest -m live -s
+    RUN_LIVE=1 ANTHROPIC_API_KEY=... pytest -m live -s
 """
 
 import os
@@ -13,7 +13,10 @@ from tests.conftest import make_incident
 
 pytestmark = [
     pytest.mark.live,
-    pytest.mark.skipif(not os.getenv("ANTHROPIC_API_KEY"), reason="ANTHROPIC_API_KEY not set"),
+    pytest.mark.skipif(
+        os.getenv("RUN_LIVE") != "1" or not os.getenv("ANTHROPIC_API_KEY"),
+        reason="paid call: set RUN_LIVE=1 and ANTHROPIC_API_KEY to run",
+    ),
 ]
 
 

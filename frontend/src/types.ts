@@ -82,4 +82,7 @@ export interface Sample {
 export interface Health {
   status: string;
   incidents_indexed: number;
+  llm_mode: "demo" | "claude";
 }
+
+export const DEMO_MODEL = "demo";

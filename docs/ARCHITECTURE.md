@@ -171,7 +171,8 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 | Env var | Default | Purpose |
 |---|---|---|
 | `DATABASE_URL` | `postgresql://triage:triage@localhost:5438/triage` | Postgres |
-| `ANTHROPIC_API_KEY` | — | Claude API |
+| `LLM_MODE` | `demo` | `demo` = free, answer built from the closest past incident; `claude` = real Claude triage (billed) |
+| `ANTHROPIC_API_KEY` | — | Claude API (only used when `LLM_MODE=claude`) |
 | `CLAUDE_MODEL` | `claude-opus-5-5` | Triage model |
 | `CLAUDE_EFFORT` | `low` | Thinking effort (latency vs depth) |
 | `EMBED_MODEL` / `EMBED_DIM` | `BAAI/bge-small-en-v1.5` / `384` | Embeddings |
