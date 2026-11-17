@@ -181,7 +181,7 @@ class DemoTriager:
             suggested_fix=top.fix,
             next_steps=[
                 f"Confirm this log shows the same failure as past incident #{top.id} ({top.title}).",
-                f"If it does, apply the same fix to {top.service if top.service else 'this service'}.",
+                f"If it does, apply the same fix here (last time it was fixed in {top.service}).",
                 "If it doesn't, check the other similar incidents below.",
             ],
             matched_incident_ids=[top.id],

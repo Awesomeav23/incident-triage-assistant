@@ -13,6 +13,8 @@ def test_demo_reuses_closest_incident():
     assert r.suggested_fix == top.fix and r.severity == top.severity
     assert r.matched_incident_ids == [7] and r.confidence == 0.88
     assert "88% similar" in r.root_cause_summary and "demo mode" in r.severity_reason
+    # the past incident's service is history, not where the new log came from
+    assert any("fix here (last time it was fixed in session-service)" in s for s in r.next_steps)
 
 
 def test_demo_without_matches_says_so():
