@@ -32,6 +32,7 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-004b — No-match cutoff favours keeping correct matches
 - **Decision:** `MIN_SIMILARITY` = the highest cutoff that keeps every correct match in the eval (0.73).
 - **Why:** a wrongly dropped match removes useful context; a wrongly kept one is still filtered by Claude's "only cite genuine matches" rule. The two similarity ranges overlap, so no cutoff is perfect.
+- **Update (Phase 5):** the cutoff gates the result set, not each result. If any of the top k clears it, all top k are shown; otherwise only deeper results that clear it (usually none → "no close match"). Filtering per result had dropped two correct matches at 0.708 / 0.729 while keeping wrong ones at 0.730–0.732. Right family shown: 44 → 46 of 47; no-match decisions unchanged.
 
 ### ADR-005 — Claude API direct, Claude Opus 5.5 at low effort
 - **Decision:** the `anthropic` Python SDK, model `claude-opus-5-5`, `effort: low`, configurable via env.

@@ -99,6 +99,19 @@ def test_min_similarity_filters_weak_matches(store):
 
 
 @db
+def test_cutoff_keeps_full_top_k_when_best_match_is_close(store):
+    """One close match is enough: weaker results stay so the model can weigh them."""
+    log = "redis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused."
+    vec = get_embedder().embed(log)
+    unfiltered = store.search(vec, 3, mode="hybrid", query_text=log, distinct_families=True)
+    best = max(r.similarity for r in unfiltered)
+    assert min(r.similarity for r in unfiltered) < best  # some are weaker than the best
+    cut = store.search(vec, 3, mode="hybrid", query_text=log, distinct_families=True,
+                       min_similarity=best - 0.001)
+    assert [r.id for r in cut] == [r.id for r in unfiltered]
+
+
+@db
 def test_invalid_mode_rejected(store):
     with pytest.raises(ValueError):
         store.search(get_embedder().embed("x" * 20), 1, mode="fuzzy")

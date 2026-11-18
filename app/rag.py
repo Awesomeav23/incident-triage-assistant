@@ -192,7 +192,8 @@ class IncidentStore:
         vector  - pgvector cosine distance
         keyword - Postgres full-text (ts_rank over an OR-query of log tokens)
         hybrid  - reciprocal rank fusion of both: score = sum(1 / (RRF_K + rank))
-        Results with cosine similarity below min_similarity are dropped.
+        min_similarity: if a top-k result reaches it, all top k are returned; if none does,
+        only deeper results that reach it (usually none, i.e. "no close match").
         """
         if mode not in SEARCH_MODES:
             raise ValueError(f"mode must be one of {SEARCH_MODES}")
@@ -234,19 +235,29 @@ class IncidentStore:
         with self.conn() as c, c.cursor(cursor_factory=RealDictCursor) as cur:
             cur.execute(sql, params)
             rows = cur.fetchall()
-        results, seen = [], set()
-        for r in rows:
-            if r["similarity"] < min_similarity:
-                continue
-            if distinct_families:
-                key = r["family"] or f"id:{r['id']}"  # unlabelled incidents stand alone
-                if key in seen:
+        def pick(min_sim: float) -> list[SimilarIncident]:
+            results, seen = [], set()
+            for r in rows:
+                if r["similarity"] < min_sim:
                     continue
-                seen.add(key)
-            results.append(SimilarIncident(**r))
-            if len(results) == top_k:
-                break
-        return results
+                if distinct_families:
+                    key = r["family"] or f"id:{r['id']}"  # unlabelled incidents stand alone
+                    if key in seen:
+                        continue
+                    seen.add(key)
+                results.append(SimilarIncident(**r))
+                if len(results) == top_k:
+                    break
+            return results
+
+        # The cutoff decides "is anything close enough?", not which results to show:
+        # if one of the top k clears it, keep all top k (the model judges relevance).
+        # Filtering each one separately dropped correct matches sitting just under the
+        # cutoff (0.708, 0.729) while weaker wrong ones at 0.73 stayed.
+        top = pick(0.0)
+        if any(r.similarity >= min_similarity for r in top):
+            return top
+        return pick(min_similarity)  # nothing in the top k is close: only deeper close ones
 
     def list(
         self, q: str | None = None, severity: str | None = None, limit: int = 20, offset: int = 0,

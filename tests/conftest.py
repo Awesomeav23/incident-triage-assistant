@@ -43,6 +43,9 @@ class FakeStore:
         self.search_kwargs = {"top_k": top_k, "mode": mode, "query_text": query_text,
                               "min_similarity": min_similarity,
                               "distinct_families": distinct_families}
+        top = self.results[:top_k]  # same cutoff rule as IncidentStore.search
+        if any(r.similarity >= min_similarity for r in top):
+            return top
         return [r for r in self.results if r.similarity >= min_similarity][:top_k]
 
     def add(self, inc, embedding) -> int:

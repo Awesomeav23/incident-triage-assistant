@@ -1,6 +1,6 @@
 {
-  "run_at": "2026-11-18T20:58:11+00:00",
-  "git_sha": "3e57953",
+  "run_at": "2026-11-18T21:04:06+00:00",
+  "git_sha": "741bb94",
   "config": {
     "triager": "demo",
     "model": null,
@@ -21,18 +21,18 @@
     "severity_exact": 0.957,
     "severity_within_1": 0.979,
     "citation_recall": 0.936,
-    "retrieval_ceiling": 0.936,
-    "citation_recall_when_shown": 1.0,
+    "retrieval_ceiling": 0.979,
+    "citation_recall_when_shown": 0.957,
     "citation_precision": 0.957,
     "no_match_honesty": 0.667,
     "root_cause_score": 0.936,
     "fix_actionable": 0.957,
-    "confidence_when_correct": 0.858,
-    "confidence_when_wrong": 0.52,
+    "confidence_when_correct": 0.857,
+    "confidence_when_wrong": 0.513,
     "llm_ms_p50": 0.0,
     "llm_ms_p95": 0.0,
-    "total_ms_p50": 18.0,
-    "total_ms_p95": 26.0
+    "total_ms_p50": 19.1,
+    "total_ms_p95": 34.5
   },
   "cost": {
     "triage_input_tokens": 0,
@@ -57,10 +57,10 @@
       ],
       "top1_family": "pg-pool-exhaustion",
       "latency_ms": {
-        "embed": 31.4,
-        "search": 22.6,
+        "embed": 25.2,
+        "search": 14.7,
         "llm": 0.0,
-        "total": 54.0
+        "total": 39.9
       },
       "expected_severity": "critical",
       "severity_exact": true,
@@ -94,10 +94,10 @@
       ],
       "top1_family": "java-npe-missing-address",
       "latency_ms": {
-        "embed": 22.0,
-        "search": 4.1,
+        "embed": 26.6,
+        "search": 8.0,
         "llm": 0.0,
-        "total": 26.0
+        "total": 34.5
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -131,10 +131,10 @@
       ],
       "top1_family": "k8s-oomkilled",
       "latency_ms": {
-        "embed": 13.3,
-        "search": 4.8,
+        "embed": 14.9,
+        "search": 4.3,
         "llm": 0.0,
-        "total": 18.1
+        "total": 19.2
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -162,14 +162,16 @@
         "npm-lockfile-drift"
       ],
       "shown_families": [
-        "npm-lockfile-drift"
+        "npm-lockfile-drift",
+        "docker-no-space",
+        "npm-eresolve-peer"
       ],
       "top1_family": "npm-lockfile-drift",
       "latency_ms": {
-        "embed": 18.0,
+        "embed": 17.8,
         "search": 4.3,
         "llm": 0.0,
-        "total": 22.2
+        "total": 22.1
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -203,10 +205,10 @@
       ],
       "top1_family": "redis-failover-refused",
       "latency_ms": {
-        "embed": 19.1,
-        "search": 4.3,
-        "llm": 0.0,
-        "total": 23.4
+        "embed": 19.6,
+        "search": 4.9,
+        "llm": 0.1,
+        "total": 24.6
       },
       "expected_severity": "critical",
       "severity_exact": true,
@@ -240,10 +242,10 @@
       ],
       "top1_family": "tls-cert-expired",
       "latency_ms": {
-        "embed": 12.0,
-        "search": 3.9,
+        "embed": 12.1,
+        "search": 4.0,
         "llm": 0.0,
-        "total": 15.9
+        "total": 16.1
       },
       "expected_severity": "critical",
       "severity_exact": true,
@@ -271,14 +273,16 @@
         "node-unhandled-rejection"
       ],
       "shown_families": [
-        "node-unhandled-rejection"
+        "node-unhandled-rejection",
+        "dynamodb-hot-partition",
+        "npm-lockfile-drift"
       ],
       "top1_family": "node-unhandled-rejection",
       "latency_ms": {
-        "embed": 18.8,
-        "search": 4.2,
+        "embed": 20.2,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 23.0
+        "total": 24.4
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -308,14 +312,14 @@
       "shown_families": [
         "terraform-state-lock",
         "tls-hostname-mismatch",
-        "lambda-oom"
+        "pg-pool-exhaustion"
       ],
       "top1_family": "terraform-state-lock",
       "latency_ms": {
-        "embed": 14.4,
-        "search": 4.0,
-        "llm": 0.0,
-        "total": 18.4
+        "embed": 14.6,
+        "search": 4.1,
+        "llm": 0.1,
+        "total": 18.8
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -349,10 +353,10 @@
       ],
       "top1_family": "kafka-rebalance-storm",
       "latency_ms": {
-        "embed": 18.8,
-        "search": 4.4,
+        "embed": 33.0,
+        "search": 6.5,
         "llm": 0.0,
-        "total": 23.2
+        "total": 39.6
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -386,10 +390,10 @@
       ],
       "top1_family": "go-nil-map",
       "latency_ms": {
-        "embed": 16.5,
-        "search": 7.3,
+        "embed": 17.0,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 23.8
+        "total": 21.1
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -423,10 +427,10 @@
       ],
       "top1_family": "s3-kms-access-denied",
       "latency_ms": {
-        "embed": 17.3,
-        "search": 4.0,
+        "embed": 23.6,
+        "search": 4.7,
         "llm": 0.0,
-        "total": 21.3
+        "total": 28.3
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -456,14 +460,14 @@
       "shown_families": [
         "pg-wal-disk-full",
         "pg-statement-timeout",
-        "pg-too-many-clients"
+        "docker-no-space"
       ],
       "top1_family": "pg-wal-disk-full",
       "latency_ms": {
-        "embed": 13.2,
-        "search": 4.4,
+        "embed": 13.6,
+        "search": 5.0,
         "llm": 0.0,
-        "total": 17.7
+        "total": 18.6
       },
       "expected_severity": "critical",
       "severity_exact": true,
@@ -493,14 +497,14 @@
       "shown_families": [
         "k8s-liveness-slow-start",
         "k8s-imagepullbackoff",
-        "k8s-oomkilled"
+        "redis-failover-refused"
       ],
       "top1_family": "k8s-liveness-slow-start",
       "latency_ms": {
-        "embed": 12.9,
-        "search": 4.1,
+        "embed": 13.5,
+        "search": 4.7,
         "llm": 0.0,
-        "total": 16.9
+        "total": 18.2
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -534,10 +538,10 @@
       ],
       "top1_family": "celery-visibility-timeout",
       "latency_ms": {
-        "embed": 13.9,
-        "search": 3.7,
+        "embed": 15.4,
+        "search": 4.7,
         "llm": 0.0,
-        "total": 17.6
+        "total": 20.1
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -559,20 +563,22 @@
     {
       "name": "novel: segfault in native extension (no good match)",
       "expected_family": null,
-      "predicted_severity": "high",
-      "confidence": 0.78,
+      "predicted_severity": "critical",
+      "confidence": 0.68,
       "cited_families": [
-        "go-nil-pointer-http"
+        "pg-pool-exhaustion"
       ],
       "shown_families": [
-        "go-nil-pointer-http"
+        "pg-pool-exhaustion",
+        "go-nil-pointer-http",
+        "celery-worker-sigkill"
       ],
-      "top1_family": "go-nil-pointer-http",
+      "top1_family": "pg-pool-exhaustion",
       "latency_ms": {
-        "embed": 20.3,
-        "search": 5.3,
+        "embed": 29.9,
+        "search": 5.2,
         "llm": 0.0,
-        "total": 25.6
+        "total": 35.1
       },
       "honest_no_match": false,
       "triage_usage": null,
@@ -588,15 +594,15 @@
       ],
       "shown_families": [
         "pg-too-many-clients",
-        "github-rate-limit",
-        "dns-ndots-coredns"
+        "node-unhandled-rejection",
+        "go-nil-pointer-http"
       ],
       "top1_family": "pg-too-many-clients",
       "latency_ms": {
-        "embed": 17.7,
-        "search": 4.1,
+        "embed": 19.9,
+        "search": 4.7,
         "llm": 0.0,
-        "total": 21.8
+        "total": 24.6
       },
       "expected_severity": "critical",
       "severity_exact": true,
@@ -624,14 +630,16 @@
         "pg-statement-timeout"
       ],
       "shown_families": [
-        "pg-statement-timeout"
+        "pg-statement-timeout",
+        "k8s-crashloop-missing-env",
+        "java-heap-oom"
       ],
       "top1_family": "pg-statement-timeout",
       "latency_ms": {
-        "embed": 15.7,
-        "search": 4.8,
+        "embed": 17.3,
+        "search": 4.6,
         "llm": 0.0,
-        "total": 20.5
+        "total": 21.9
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -660,15 +668,15 @@
       ],
       "shown_families": [
         "redis-oom-maxmemory",
-        "github-rate-limit",
-        "tls-hostname-mismatch"
+        "redis-slow-command-timeout",
+        "github-rate-limit"
       ],
       "top1_family": "redis-oom-maxmemory",
       "latency_ms": {
-        "embed": 18.3,
-        "search": 3.9,
+        "embed": 18.2,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 22.2
+        "total": 22.3
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -690,33 +698,35 @@
     {
       "name": "redis-slow-command-timeout (holdout)",
       "expected_family": "redis-slow-command-timeout",
-      "predicted_severity": "medium",
-      "confidence": 0.76,
+      "predicted_severity": "critical",
+      "confidence": 0.71,
       "cited_families": [
-        "redis-slow-command-timeout"
+        "pg-pool-exhaustion"
       ],
       "shown_families": [
-        "redis-slow-command-timeout"
+        "pg-pool-exhaustion",
+        "redis-slow-command-timeout",
+        "java-npe-missing-address"
       ],
-      "top1_family": "redis-slow-command-timeout",
+      "top1_family": "pg-pool-exhaustion",
       "latency_ms": {
-        "embed": 13.7,
-        "search": 4.2,
+        "embed": 13.8,
+        "search": 6.4,
         "llm": 0.0,
-        "total": 17.9
+        "total": 20.3
       },
       "expected_severity": "medium",
-      "severity_exact": true,
-      "severity_within_1": true,
+      "severity_exact": false,
+      "severity_within_1": false,
       "retrieved": true,
-      "cited_correct": true,
-      "cited_wrong": 0,
+      "cited_correct": false,
+      "cited_wrong": 1,
       "n_cited": 1,
       "fact_scores": [
-        2,
-        2
+        0,
+        0
       ],
-      "root_cause_score": 1.0,
+      "root_cause_score": 0.0,
       "actionable": true,
       "judge_rationale": "keyword match",
       "triage_usage": null,
@@ -737,10 +747,10 @@
       ],
       "top1_family": "k8s-imagepullbackoff",
       "latency_ms": {
-        "embed": 12.3,
-        "search": 3.9,
+        "embed": 15.8,
+        "search": 6.4,
         "llm": 0.0,
-        "total": 16.2
+        "total": 22.2
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -769,19 +779,20 @@
       ],
       "shown_families": [
         "tls-cert-expired",
+        "k8s-crashloop-missing-env",
         "pg-pool-exhaustion"
       ],
       "top1_family": "tls-cert-expired",
       "latency_ms": {
-        "embed": 14.5,
-        "search": 4.3,
+        "embed": 15.7,
+        "search": 6.2,
         "llm": 0.0,
-        "total": 18.8
+        "total": 21.9
       },
       "expected_severity": "high",
       "severity_exact": false,
       "severity_within_1": true,
-      "retrieved": false,
+      "retrieved": true,
       "cited_correct": false,
       "cited_wrong": 1,
       "n_cited": 1,
@@ -810,10 +821,10 @@
       ],
       "top1_family": "k8s-pending-insufficient-cpu",
       "latency_ms": {
-        "embed": 11.3,
-        "search": 4.7,
+        "embed": 11.7,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 16.1
+        "total": 15.9
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -842,14 +853,15 @@
       ],
       "shown_families": [
         "java-heap-oom",
-        "kafka-rebalance-storm"
+        "kafka-rebalance-storm",
+        "java-npe-missing-address"
       ],
       "top1_family": "java-heap-oom",
       "latency_ms": {
-        "embed": 16.3,
-        "search": 4.2,
+        "embed": 18.0,
+        "search": 5.5,
         "llm": 0.0,
-        "total": 20.4
+        "total": 23.5
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -877,14 +889,16 @@
         "node-heap-oom-build"
       ],
       "shown_families": [
-        "node-heap-oom-build"
+        "node-heap-oom-build",
+        "go-nil-pointer-http",
+        "npm-lockfile-drift"
       ],
       "top1_family": "node-heap-oom-build",
       "latency_ms": {
-        "embed": 12.6,
-        "search": 4.3,
+        "embed": 17.5,
+        "search": 4.6,
         "llm": 0.0,
-        "total": 16.9
+        "total": 22.1
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -912,14 +926,16 @@
         "npm-eresolve-peer"
       ],
       "shown_families": [
-        "npm-eresolve-peer"
+        "npm-eresolve-peer",
+        "tls-hostname-mismatch",
+        "ts-strict-null"
       ],
       "top1_family": "npm-eresolve-peer",
       "latency_ms": {
-        "embed": 18.1,
-        "search": 4.2,
+        "embed": 17.4,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 22.3
+        "total": 21.5
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -953,10 +969,10 @@
       ],
       "top1_family": "tls-hostname-mismatch",
       "latency_ms": {
-        "embed": 9.6,
-        "search": 3.9,
+        "embed": 9.5,
+        "search": 4.3,
         "llm": 0.0,
-        "total": 13.6
+        "total": 13.8
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -991,9 +1007,9 @@
       "top1_family": "tls-missing-ca-bundle",
       "latency_ms": {
         "embed": 11.8,
-        "search": 4.2,
+        "search": 4.5,
         "llm": 0.0,
-        "total": 16.0
+        "total": 16.3
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1027,10 +1043,10 @@
       ],
       "top1_family": "s3-bucket-policy-deny",
       "latency_ms": {
-        "embed": 10.4,
-        "search": 3.8,
+        "embed": 10.5,
+        "search": 4.2,
         "llm": 0.0,
-        "total": 14.2
+        "total": 14.7
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1060,14 +1076,14 @@
       "shown_families": [
         "aws-expired-token",
         "tls-cert-expired",
-        "s3-kms-access-denied"
+        "pg-pool-exhaustion"
       ],
       "top1_family": "aws-expired-token",
       "latency_ms": {
         "embed": 12.5,
-        "search": 3.9,
+        "search": 4.5,
         "llm": 0.0,
-        "total": 16.4
+        "total": 17.1
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1096,14 +1112,15 @@
       ],
       "shown_families": [
         "dynamodb-hot-partition",
-        "github-rate-limit"
+        "java-heap-oom",
+        "java-npe-missing-address"
       ],
       "top1_family": "dynamodb-hot-partition",
       "latency_ms": {
-        "embed": 12.2,
-        "search": 4.4,
+        "embed": 12.5,
+        "search": 3.8,
         "llm": 0.0,
-        "total": 16.6
+        "total": 16.3
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1132,14 +1149,15 @@
       ],
       "shown_families": [
         "kafka-not-leader",
-        "kafka-rebalance-storm"
+        "kafka-rebalance-storm",
+        "k8s-imagepullbackoff"
       ],
       "top1_family": "kafka-not-leader",
       "latency_ms": {
-        "embed": 10.2,
-        "search": 5.0,
+        "embed": 9.3,
+        "search": 3.8,
         "llm": 0.0,
-        "total": 15.1
+        "total": 13.1
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1174,9 +1192,9 @@
       "top1_family": "go-nil-pointer-http",
       "latency_ms": {
         "embed": 17.3,
-        "search": 3.8,
+        "search": 3.7,
         "llm": 0.0,
-        "total": 21.1
+        "total": 21.0
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1210,10 +1228,10 @@
       ],
       "top1_family": "go-concurrent-map-writes",
       "latency_ms": {
-        "embed": 13.4,
-        "search": 4.0,
+        "embed": 13.0,
+        "search": 3.8,
         "llm": 0.0,
-        "total": 17.3
+        "total": 16.8
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1241,14 +1259,16 @@
         "terraform-provider-constraint"
       ],
       "shown_families": [
-        "terraform-provider-constraint"
+        "terraform-provider-constraint",
+        "terraform-state-lock",
+        "npm-lockfile-drift"
       ],
       "top1_family": "terraform-provider-constraint",
       "latency_ms": {
-        "embed": 10.8,
-        "search": 3.8,
+        "embed": 10.3,
+        "search": 3.6,
         "llm": 0.0,
-        "total": 14.5
+        "total": 13.9
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1276,14 +1296,16 @@
         "gha-token-permissions"
       ],
       "shown_families": [
-        "gha-token-permissions"
+        "gha-token-permissions",
+        "tls-cert-expired",
+        "node-heap-oom-build"
       ],
       "top1_family": "gha-token-permissions",
       "latency_ms": {
-        "embed": 11.7,
-        "search": 3.8,
+        "embed": 12.4,
+        "search": 4.4,
         "llm": 0.0,
-        "total": 15.5
+        "total": 16.8
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1311,10 +1333,10 @@
       "shown_families": [],
       "top1_family": null,
       "latency_ms": {
-        "embed": 9.0,
-        "search": 3.7,
+        "embed": 9.1,
+        "search": 3.5,
         "llm": 0.0,
-        "total": 12.7
+        "total": 12.5
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1348,10 +1370,10 @@
       ],
       "top1_family": "pytest-db-in-use",
       "latency_ms": {
-        "embed": 20.4,
-        "search": 5.2,
+        "embed": 12.7,
+        "search": 3.9,
         "llm": 0.0,
-        "total": 25.6
+        "total": 16.6
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1379,14 +1401,16 @@
         "python-transitive-dep-break"
       ],
       "shown_families": [
-        "python-transitive-dep-break"
+        "python-transitive-dep-break",
+        "pg-pool-exhaustion",
+        "dns-ndots-coredns"
       ],
       "top1_family": "python-transitive-dep-break",
       "latency_ms": {
-        "embed": 28.5,
-        "search": 3.8,
+        "embed": 13.4,
+        "search": 4.0,
         "llm": 0.0,
-        "total": 32.4
+        "total": 17.4
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1420,10 +1444,10 @@
       ],
       "top1_family": "celery-worker-sigkill",
       "latency_ms": {
-        "embed": 10.3,
-        "search": 4.0,
+        "embed": 10.5,
+        "search": 4.7,
         "llm": 0.0,
-        "total": 14.2
+        "total": 15.2
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1451,14 +1475,16 @@
         "dns-ndots-coredns"
       ],
       "shown_families": [
-        "dns-ndots-coredns"
+        "dns-ndots-coredns",
+        "node-unhandled-rejection",
+        "k8s-oomkilled"
       ],
       "top1_family": "dns-ndots-coredns",
       "latency_ms": {
-        "embed": 14.5,
-        "search": 4.0,
+        "embed": 13.6,
+        "search": 3.6,
         "llm": 0.0,
-        "total": 18.5
+        "total": 17.2
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1492,10 +1518,10 @@
       ],
       "top1_family": "lambda-oom",
       "latency_ms": {
-        "embed": 10.6,
-        "search": 5.4,
+        "embed": 10.5,
+        "search": 4.0,
         "llm": 0.0,
-        "total": 16.0
+        "total": 14.5
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1517,33 +1543,35 @@
     {
       "name": "alembic-multiple-heads (holdout)",
       "expected_family": "alembic-multiple-heads",
-      "predicted_severity": "critical",
+      "predicted_severity": "medium",
       "confidence": 0.73,
       "cited_families": [
-        "pg-pool-exhaustion"
+        "alembic-multiple-heads"
       ],
       "shown_families": [
-        "pg-pool-exhaustion"
+        "alembic-multiple-heads",
+        "pg-pool-exhaustion",
+        "pg-migration-deadlock"
       ],
-      "top1_family": "pg-pool-exhaustion",
+      "top1_family": "alembic-multiple-heads",
       "latency_ms": {
-        "embed": 10.6,
-        "search": 4.0,
+        "embed": 10.9,
+        "search": 4.2,
         "llm": 0.0,
-        "total": 14.7
+        "total": 15.2
       },
       "expected_severity": "medium",
-      "severity_exact": false,
-      "severity_within_1": false,
-      "retrieved": false,
-      "cited_correct": false,
-      "cited_wrong": 1,
+      "severity_exact": true,
+      "severity_within_1": true,
+      "retrieved": true,
+      "cited_correct": true,
+      "cited_wrong": 0,
       "n_cited": 1,
       "fact_scores": [
-        0,
-        0
+        2,
+        2
       ],
-      "root_cause_score": 0.0,
+      "root_cause_score": 1.0,
       "actionable": true,
       "judge_rationale": "keyword match",
       "triage_usage": null,
@@ -1559,14 +1587,15 @@
       ],
       "shown_families": [
         "docker-no-space",
-        "npm-lockfile-drift"
+        "npm-lockfile-drift",
+        "pg-wal-disk-full"
       ],
       "top1_family": "docker-no-space",
       "latency_ms": {
-        "embed": 18.9,
-        "search": 3.9,
+        "embed": 19.4,
+        "search": 4.0,
         "llm": 0.0,
-        "total": 22.9
+        "total": 23.4
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1595,14 +1624,15 @@
       ],
       "shown_families": [
         "pytest-timezone-flaky",
-        "pg-pool-exhaustion"
+        "pg-pool-exhaustion",
+        "java-npe-missing-address"
       ],
       "top1_family": "pytest-timezone-flaky",
       "latency_ms": {
-        "embed": 12.4,
-        "search": 4.3,
+        "embed": 12.9,
+        "search": 4.1,
         "llm": 0.0,
-        "total": 16.7
+        "total": 17.0
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1631,14 +1661,15 @@
       ],
       "shown_families": [
         "pg-migration-deadlock",
+        "pytest-db-in-use",
         "pg-pool-exhaustion"
       ],
       "top1_family": "pg-migration-deadlock",
       "latency_ms": {
-        "embed": 14.2,
-        "search": 3.8,
+        "embed": 14.6,
+        "search": 4.5,
         "llm": 0.0,
-        "total": 18.0
+        "total": 19.1
       },
       "expected_severity": "high",
       "severity_exact": true,
@@ -1672,10 +1703,10 @@
       ],
       "top1_family": "lambda-timeout",
       "latency_ms": {
-        "embed": 9.5,
-        "search": 4.1,
+        "embed": 9.4,
+        "search": 7.6,
         "llm": 0.0,
-        "total": 13.6
+        "total": 17.0
       },
       "expected_severity": "medium",
       "severity_exact": true,
@@ -1709,10 +1740,10 @@
       ],
       "top1_family": "ts-strict-null",
       "latency_ms": {
-        "embed": 21.9,
-        "search": 4.2,
+        "embed": 14.7,
+        "search": 6.7,
         "llm": 0.0,
-        "total": 26.2
+        "total": 21.4
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1742,14 +1773,14 @@
       "shown_families": [
         "github-rate-limit",
         "tls-hostname-mismatch",
-        "tls-cert-expired"
+        "gha-token-permissions"
       ],
       "top1_family": "github-rate-limit",
       "latency_ms": {
-        "embed": 15.5,
-        "search": 4.2,
+        "embed": 17.1,
+        "search": 5.5,
         "llm": 0.0,
-        "total": 19.8
+        "total": 22.6
       },
       "expected_severity": "low",
       "severity_exact": true,
@@ -1777,10 +1808,10 @@
       "shown_families": [],
       "top1_family": null,
       "latency_ms": {
-        "embed": 15.7,
-        "search": 4.4,
+        "embed": 20.8,
+        "search": 3.9,
         "llm": 0.0,
-        "total": 20.2
+        "total": 24.7
       },
       "honest_no_match": true,
       "triage_usage": null,
@@ -1795,10 +1826,10 @@
       "shown_families": [],
       "top1_family": null,
       "latency_ms": {
-        "embed": 12.0,
-        "search": 5.0,
+        "embed": 11.5,
+        "search": 3.9,
         "llm": 0.0,
-        "total": 17.0
+        "total": 15.4
       },
       "honest_no_match": true,
       "triage_usage": null,
@@ -1813,10 +1844,10 @@
       "shown_families": [],
       "top1_family": null,
       "latency_ms": {
-        "embed": 13.1,
-        "search": 4.2,
+        "embed": 13.8,
+        "search": 4.0,
         "llm": 0.0,
-        "total": 17.4
+        "total": 17.7
       },
       "honest_no_match": true,
       "triage_usage": null,
@@ -1831,10 +1862,10 @@
       "shown_families": [],
       "top1_family": null,
       "latency_ms": {
-        "embed": 16.2,
-        "search": 3.6,
+        "embed": 15.6,
+        "search": 3.8,
         "llm": 0.0,
-        "total": 19.8
+        "total": 19.4
       },
       "honest_no_match": true,
       "triage_usage": null,
@@ -1850,14 +1881,15 @@
       ],
       "shown_families": [
         "s3-bucket-policy-deny",
+        "docker-no-space",
         "gha-token-permissions"
       ],
       "top1_family": "s3-bucket-policy-deny",
       "latency_ms": {
-        "embed": 12.2,
-        "search": 4.9,
+        "embed": 12.3,
+        "search": 3.7,
         "llm": 0.0,
-        "total": 17.1
+        "total": 15.9
       },
       "honest_no_match": false,
       "triage_usage": null,

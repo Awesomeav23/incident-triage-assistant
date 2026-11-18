@@ -178,7 +178,7 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 | `EMBED_MODEL` / `EMBED_DIM` | `BAAI/bge-small-en-v1.5` / `384` | Embeddings |
 | `TOP_K` | `3` | Default retrieval depth |
 | `SEARCH_MODE` | `hybrid` | `vector` / `keyword` / `hybrid` |
-| `MIN_SIMILARITY` | `0.73` | "No close match" cutoff (cosine) |
+| `MIN_SIMILARITY` | `0.73` | "No close match" cutoff (cosine): if none of the top k reaches it, nothing close is shown (ADR-004b) |
 | `DEDUP_WINDOW_MIN` | `60` | Phase 6 duplicate window |
 | `METRICS_ENABLED` | `false` | CloudWatch publishing |
 | `AWS_ENDPOINT_URL` | — | `http://localhost:4567` for Moto |
