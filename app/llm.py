@@ -97,6 +97,8 @@ class ClaudeTriager:
         self.model = model
         self.effort = effort
         self._client: anthropic.Anthropic | None = None  # created on first call
+        # Token counts of the most recent call, for cost reporting (scripts/eval_triage.py).
+        self.last_usage: dict[str, int] | None = None
 
     def _get_client(self) -> anthropic.Anthropic:
         if self._client is None:
@@ -134,6 +136,11 @@ class ClaudeTriager:
         except anthropic.APIConnectionError as e:
             raise LLMError("Could not reach the Claude API") from e
 
+        usage = getattr(response, "usage", None)
+        self.last_usage = {
+            "input_tokens": getattr(usage, "input_tokens", 0) or 0,
+            "output_tokens": getattr(usage, "output_tokens", 0) or 0,
+        }
         if response.stop_reason == "refusal":
             raise LLMError("Claude declined to triage this log")
         if response.stop_reason == "max_tokens" or response.parsed_output is None:

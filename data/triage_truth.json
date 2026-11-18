@@ -1,0 +1,193 @@
+{
+  "_about": "Ground truth for scripts/eval_triage.py, keyed by failure family. Severity = the family's base incident. Each key fact is something a correct root cause must say; keywords are lowercase substrings the free keyword judge looks for (any one matches). The Claude judge reads the fact text, not the keywords.",
+  "families": {
+    "pg-pool-exhaustion": {"severity": "critical", "key_facts": [
+      {"fact": "the connection pool is exhausted", "keywords": ["pool exhaust", "exhausted", "queuepool limit", "pool limit", "pool is full", "no free connection", "pool size"]},
+      {"fact": "connections/sessions are leaked or not returned (not closed)", "keywords": ["leak", "not closed", "never closed", "not returned", "not released", "close()", "session.close"]}
+    ]},
+    "java-npe-missing-address": {"severity": "high", "key_facts": [
+      {"fact": "the billing address is null/missing for some customers", "keywords": ["address", "billing"]},
+      {"fact": "code assumes the field is always present instead of null-checking it", "keywords": ["null check", "assum", "not null", "null-check", "optional", "always exist", "always present"]}
+    ]},
+    "k8s-oomkilled": {"severity": "high", "key_facts": [
+      {"fact": "the container exceeded its memory limit", "keywords": ["memory limit", "limit", "exceed"]},
+      {"fact": "the kernel OOM killer terminated it (exit 137)", "keywords": ["oom", "137", "out of memory"]}
+    ]},
+    "npm-lockfile-drift": {"severity": "low", "key_facts": [
+      {"fact": "package.json and package-lock.json are out of sync", "keywords": ["out of sync", "lock", "package-lock"]},
+      {"fact": "the regenerated lockfile was not committed after a dependency change", "keywords": ["not committed", "without committing", "regenerat", "npm install", "commit"]}
+    ]},
+    "redis-failover-refused": {"severity": "critical", "key_facts": [
+      {"fact": "a Redis/ElastiCache failover moved the primary", "keywords": ["failover", "fail over", "promoted", "new primary"]},
+      {"fact": "the client points at a fixed node IP/host instead of the primary endpoint DNS name", "keywords": ["endpoint", "ip address", "hardcoded", "hard-coded", "node ip", "primary ip", "dns name"]}
+    ]},
+    "tls-cert-expired": {"severity": "critical", "key_facts": [
+      {"fact": "the TLS certificate has expired", "keywords": ["expired", "expiry", "expiration", "not valid after"]},
+      {"fact": "renewal was missed/not automated", "keywords": ["renew", "rotation", "automat"]}
+    ]},
+    "node-unhandled-rejection": {"severity": "high", "key_facts": [
+      {"fact": "a promise was not awaited/caught, producing an unhandled rejection", "keywords": ["unhandled", "not awaited", "without await", "missing await", "await", ".catch"]},
+      {"fact": "the unhandled rejection crashes the Node process", "keywords": ["crash", "terminat", "exit", "process"]}
+    ]},
+    "docker-no-space": {"severity": "medium", "key_facts": [
+      {"fact": "the disk is full", "keywords": ["no space", "disk", "full"]},
+      {"fact": "Docker images/build cache accumulate without pruning", "keywords": ["prune", "build cache", "dangling", "image", "cache"]}
+    ]},
+    "terraform-state-lock": {"severity": "medium", "key_facts": [
+      {"fact": "the Terraform state lock is held", "keywords": ["state lock", "lock"]},
+      {"fact": "a previous run was killed/interrupted and never released it (stale lock)", "keywords": ["stale", "killed", "interrupt", "never released", "not released", "crashed", "timed out", "timeout", "previous"]}
+    ]},
+    "kafka-rebalance-storm": {"severity": "high", "key_facts": [
+      {"fact": "processing between polls exceeds max.poll.interval.ms", "keywords": ["max.poll.interval", "poll interval", "between polls", "poll()"]},
+      {"fact": "consumers are removed from the group, causing repeated rebalances", "keywords": ["rebalanc", "kicked", "left the group", "removed from the group", "leave the group"]}
+    ]},
+    "go-nil-map": {"severity": "high", "key_facts": [
+      {"fact": "a write to a nil (uninitialised) map", "keywords": ["nil map"]},
+      {"fact": "the map is only initialised on some code paths (e.g. when config has the block)", "keywords": ["initiali", "make(", "only when", "only if"]}
+    ]},
+    "pytest-timezone-flaky": {"severity": "low", "key_facts": [
+      {"fact": "a timezone mismatch: local time vs UTC", "keywords": ["utc", "timezone", "time zone", "local time"]},
+      {"fact": "the test is flaky/fails only at certain times of day", "keywords": ["flaky", "certain time", "midnight", "time of day", "only fails", "intermittent", "between 00"]}
+    ]},
+    "s3-kms-access-denied": {"severity": "high", "key_facts": [
+      {"fact": "the bucket uses SSE-KMS with a KMS key", "keywords": ["kms", "sse"]},
+      {"fact": "the role lacks KMS permissions on that key (e.g. kms:GenerateDataKey/Decrypt)", "keywords": ["generatedatakey", "kms:decrypt", "kms permission", "key policy", "not granted", "lacks", "missing permission", "no permission"]}
+    ]},
+    "pg-migration-deadlock": {"severity": "high", "key_facts": [
+      {"fact": "a deadlock between the migration and live traffic", "keywords": ["deadlock"]},
+      {"fact": "the migration took heavy locks on a hot table (e.g. non-concurrent index / ALTER)", "keywords": ["concurrently", "lock", "index", "alter table"]}
+    ]},
+    "lambda-timeout": {"severity": "medium", "key_facts": [
+      {"fact": "the function hit the Lambda timeout", "keywords": ["timed out", "timeout", "time limit"]},
+      {"fact": "an outbound HTTP call has no client timeout and hangs on a slow partner/upstream", "keywords": ["no timeout", "without a timeout", "timeout=", "hang", "upstream", "partner", "external"]}
+    ]},
+    "ts-strict-null": {"severity": "low", "key_facts": [
+      {"fact": "a value is possibly undefined/null under strict null checks", "keywords": ["undefined", "strictnullchecks", "strict null", "possibly", "optional"]},
+      {"fact": "a type change (upgraded types/API client) made the field optional", "keywords": ["upgrade", "type change", "types changed", "now optional", "made optional", "became optional", "new version"]}
+    ]},
+    "github-rate-limit": {"severity": "low", "key_facts": [
+      {"fact": "the GitHub API rate limit was exceeded", "keywords": ["rate limit", "quota", "403"]},
+      {"fact": "too many API calls (one per item, retries)", "keywords": ["one call per", "per pr", "per item", "too many", "retries", "many requests", "many calls", "batch"]}
+    ]},
+    "celery-visibility-timeout": {"severity": "medium", "key_facts": [
+      {"fact": "tasks run longer than the broker's visibility_timeout", "keywords": ["visibility_timeout", "visibility timeout"]},
+      {"fact": "unacknowledged tasks are redelivered and run twice", "keywords": ["redeliver", "twice", "duplicate", "re-deliver", "again"]}
+    ]},
+    "pg-wal-disk-full": {"severity": "critical", "key_facts": [
+      {"fact": "WAL accumulated and filled the disk", "keywords": ["wal", "write-ahead"]},
+      {"fact": "an abandoned/inactive replication slot prevents WAL from being recycled", "keywords": ["replication slot", "slot"]}
+    ]},
+    "k8s-liveness-slow-start": {"severity": "medium", "key_facts": [
+      {"fact": "the liveness probe kills the pod before startup finishes", "keywords": ["liveness", "probe"]},
+      {"fact": "the app starts slower than the probe's initial delay/failure budget", "keywords": ["slow start", "startup", "initialdelay", "initial delay", "startupprobe", "starts slow", "takes", "warm-up", "warm up"]}
+    ]},
+    "pg-too-many-clients": {"severity": "critical", "key_facts": [
+      {"fact": "Postgres max_connections is exceeded", "keywords": ["max_connections", "too many clients", "connection limit"]},
+      {"fact": "pods x pool size opens more connections than allowed (scale-out)", "keywords": ["pods", "replicas", "scale", "per pod", "pool size", "pgbouncer"]}
+    ]},
+    "pg-statement-timeout": {"severity": "medium", "key_facts": [
+      {"fact": "the query exceeds statement_timeout", "keywords": ["statement_timeout", "statement timeout", "canceling statement"]},
+      {"fact": "a missing index causes a sequential scan on a large table", "keywords": ["index", "sequential scan", "seq scan", "full scan", "table scan"]}
+    ]},
+    "redis-oom-maxmemory": {"severity": "high", "key_facts": [
+      {"fact": "Redis reached maxmemory and rejects writes", "keywords": ["maxmemory", "oom"]},
+      {"fact": "keys have no TTL and/or the eviction policy is noeviction", "keywords": ["ttl", "expir", "noeviction", "eviction"]}
+    ]},
+    "redis-slow-command-timeout": {"severity": "medium", "key_facts": [
+      {"fact": "a slow O(N) command (e.g. KEYS) blocked Redis", "keywords": ["keys ", "keys*", "keys session", "scan", "slow command", "o(n)", "slowlog", "blocking command"]},
+      {"fact": "Redis is single-threaded so other clients time out", "keywords": ["single-thread", "single thread", "blocked", "blocks"]}
+    ]},
+    "k8s-imagepullbackoff": {"severity": "high", "key_facts": [
+      {"fact": "the image tag does not exist in the registry", "keywords": ["not found", "doesn't exist", "does not exist", "missing", "never pushed", "not pushed", "manifest unknown"]},
+      {"fact": "the image build/push step failed or was skipped before deploy", "keywords": ["build", "push", "pipeline", "ci job"]}
+    ]},
+    "k8s-crashloop-missing-env": {"severity": "high", "key_facts": [
+      {"fact": "a required env var (e.g. DATABASE_URL) is missing", "keywords": ["environment variable", "env var", "database_url", "env", "missing"]},
+      {"fact": "the Secret/ConfigMap supplying it is absent in the namespace", "keywords": ["secret", "configmap", "namespace"]}
+    ]},
+    "k8s-pending-insufficient-cpu": {"severity": "medium", "key_facts": [
+      {"fact": "pods are unschedulable due to insufficient CPU", "keywords": ["insufficient cpu", "cpu", "unschedulable", "pending"]},
+      {"fact": "the cluster/node group cannot scale up (at autoscaler max) or requests are too high", "keywords": ["autoscal", "max", "node group", "nodegroup", "capacity", "request"]}
+    ]},
+    "java-heap-oom": {"severity": "high", "key_facts": [
+      {"fact": "the JVM ran out of heap space", "keywords": ["heap", "outofmemoryerror", "out of memory"]},
+      {"fact": "an unbounded cache/map without eviction keeps growing", "keywords": ["unbounded", "eviction", "cache", "hashmap", "grows", "leak"]}
+    ]},
+    "node-heap-oom-build": {"severity": "low", "key_facts": [
+      {"fact": "the Node build exceeds the default V8 heap limit", "keywords": ["heap", "max-old-space-size", "memory"]},
+      {"fact": "it's a large production build (bundle/source maps) on CI", "keywords": ["build", "source map", "sourcemap", "bundle", "webpack", "vite"]}
+    ]},
+    "npm-eresolve-peer": {"severity": "low", "key_facts": [
+      {"fact": "a peer dependency conflict (ERESOLVE)", "keywords": ["peer", "eresolve"]},
+      {"fact": "a package only supports an older major version of the upgraded framework (e.g. React)", "keywords": ["react", "older", "only supports", "up to", "unmaintained", "incompatible"]}
+    ]},
+    "tls-hostname-mismatch": {"severity": "high", "key_facts": [
+      {"fact": "the certificate's hostname/SAN does not match the requested name", "keywords": ["hostname", "san", "subject alternative", "mismatch", "doesn't match", "does not match"]},
+      {"fact": "the hostname/domain changed but the certificate wasn't reissued", "keywords": ["domain", "new name", "renamed", "moved", "reissue", "re-issue", "changed"]}
+    ]},
+    "tls-missing-ca-bundle": {"severity": "medium", "key_facts": [
+      {"fact": "the internal/root CA is not trusted in the runtime", "keywords": ["ca", "trust", "root"]},
+      {"fact": "the base image changed and lacks the CA bundle/certificates", "keywords": ["base image", "distroless", "image", "ca-certificates", "bundle"]}
+    ]},
+    "s3-bucket-policy-deny": {"severity": "high", "key_facts": [
+      {"fact": "an explicit deny in the bucket policy", "keywords": ["bucket policy", "explicit deny", "deny"]},
+      {"fact": "the request doesn't come through the required VPC endpoint (aws:SourceVpce)", "keywords": ["vpc endpoint", "sourcevpce", "vpce", "gateway endpoint"]}
+    ]},
+    "aws-expired-token": {"severity": "medium", "key_facts": [
+      {"fact": "temporary AWS credentials/session token expired", "keywords": ["expired", "expiredtoken", "session token", "expir"]},
+      {"fact": "credentials are fetched once and not refreshed during a long-running job", "keywords": ["refresh", "once", "long-running", "long running", "reused", "static", "duration"]}
+    ]},
+    "dynamodb-hot-partition": {"severity": "high", "key_facts": [
+      {"fact": "writes are throttled on DynamoDB", "keywords": ["throttl", "provisionedthroughput", "throughput"]},
+      {"fact": "a poorly distributed partition key concentrates traffic on one hot partition", "keywords": ["hot partition", "partition key", "hot key", "one partition", "single partition"]}
+    ]},
+    "kafka-not-leader": {"severity": "medium", "key_facts": [
+      {"fact": "partition leadership moved (broker restart/leader election)", "keywords": ["leader", "restart", "broker"]},
+      {"fact": "the producer does not retry (retries=0), so messages are dropped", "keywords": ["retries", "retry", "dropped", "lost"]}
+    ]},
+    "go-nil-pointer-http": {"severity": "high", "key_facts": [
+      {"fact": "a nil pointer dereference of the HTTP response", "keywords": ["nil pointer", "nil", "dereference"]},
+      {"fact": "resp.Body.Close is deferred / resp used before checking err", "keywords": ["before checking", "err", "defer", "body.close"]}
+    ]},
+    "go-concurrent-map-writes": {"severity": "high", "key_facts": [
+      {"fact": "concurrent writes to a map from multiple goroutines", "keywords": ["concurrent map", "goroutine", "concurrent"]},
+      {"fact": "no synchronisation (mutex / sync.Map)", "keywords": ["mutex", "sync.map", "synchroni", "lock", "race"]}
+    ]},
+    "terraform-provider-constraint": {"severity": "low", "key_facts": [
+      {"fact": "conflicting provider version constraints", "keywords": ["constraint", "version", "conflict"]},
+      {"fact": "a module requires a newer major provider than the root pins", "keywords": ["module", ">= 5", "5.0", "upgrade", "pinned", "pin"]}
+    ]},
+    "gha-token-permissions": {"severity": "low", "key_facts": [
+      {"fact": "GITHUB_TOKEN lacks write permission (403 / resource not accessible)", "keywords": ["github_token", "permission", "read-only", "resource not accessible", "403"]},
+      {"fact": "the workflow needs an explicit permissions block", "keywords": ["permissions:", "permissions block", "permissions key", "declare", "workflow permissions"]}
+    ]},
+    "docker-base-image-missing": {"severity": "medium", "key_facts": [
+      {"fact": "the base image tag no longer exists / can't be pulled", "keywords": ["not found", "manifest", "removed", "no longer", "doesn't exist", "does not exist", "missing"]},
+      {"fact": "the base OS/distribution (e.g. buster) reached end of life", "keywords": ["end of life", "eol", "deprecated", "buster", "end-of-life"]}
+    ]},
+    "pytest-db-in-use": {"severity": "low", "key_facts": [
+      {"fact": "the test database can't be dropped because it's still in use", "keywords": ["in use", "being accessed", "other session", "drop"]},
+      {"fact": "connections are left open after teardown (e.g. a background thread)", "keywords": ["background", "thread", "left open", "not closed", "teardown", "open connection"]}
+    ]},
+    "python-transitive-dep-break": {"severity": "medium", "key_facts": [
+      {"fact": "an unpinned transitive dependency was upgraded (markupsafe)", "keywords": ["transitive", "markupsafe", "unpinned", "not pinned", "pin"]},
+      {"fact": "the new version removed an API the old library uses (soft_unicode)", "keywords": ["soft_unicode", "removed", "incompatible", "breaking"]}
+    ]},
+    "celery-worker-sigkill": {"severity": "high", "key_facts": [
+      {"fact": "a worker process was killed by SIGKILL / the OOM killer", "keywords": ["sigkill", "oom", "killed", "signal 9"]},
+      {"fact": "combined memory of concurrent workers exceeds the container limit", "keywords": ["concurrency", "memory limit", "memory", "workers"]}
+    ]},
+    "dns-ndots-coredns": {"severity": "high", "key_facts": [
+      {"fact": "DNS lookups are failing/timing out in the cluster", "keywords": ["dns", "lookup", "resolve", "resolution"]},
+      {"fact": "ndots:5 search-domain expansion multiplies queries and overloads CoreDNS", "keywords": ["ndots", "search domain", "coredns", "search path"]}
+    ]},
+    "lambda-oom": {"severity": "medium", "key_facts": [
+      {"fact": "the Lambda ran out of memory", "keywords": ["memory", "oom", "out of memory"]},
+      {"fact": "the whole file is loaded into memory at once (should stream/chunk)", "keywords": ["whole", "entire", "all at once", "into memory", "chunk", "stream", "dataframe"]}
+    ]},
+    "alembic-multiple-heads": {"severity": "medium", "key_facts": [
+      {"fact": "Alembic has multiple heads", "keywords": ["multiple head", "two heads", "heads"]},
+      {"fact": "two branches added migrations with the same down_revision; needs a merge revision", "keywords": ["down_revision", "branch", "merge"]}
+    ]}
+  }
+}

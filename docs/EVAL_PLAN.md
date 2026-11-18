@@ -57,9 +57,20 @@ Each eval query gets ground truth: expected incident, expected severity, and 2�
 | Fix actionable | judge yes/no: names a concrete change (config key, code change, command) |
 | Calibration | mean confidence on correct vs incorrect answers |
 
-**Judge:** a separate Claude call with the rubric, the expected facts and the triage
-output, using structured output (`{fact_scores: [...], actionable: bool, rationale}`).
-To check the judge itself, a sample of ~10 judgements is read by hand and agreement is noted.
+Ground truth lives in `data/triage_truth.json` (per family: severity + key facts with keywords).
+
+**Judges** (`--judge`):
+- `claude`: a separate Claude call with the rubric, the expected facts and the triage
+  output, using structured output (`{fact_scores: [0|1|2, ...], actionable: bool, rationale}`).
+  To check the judge itself, a sample of ~10 judgements is read by hand and agreement is noted.
+- `keyword` (free): a fact scores 2 if any of its keywords appears in the root cause, else 0.
+  Coarse but deterministic; used for the demo baseline and quick regression checks.
+
+Two extra diagnostics separate retrieval misses from Claude misses: **retrieval ceiling**
+(the expected family was among the incidents shown) and **citation recall when shown**.
+
+**Spending guard:** with a paid triager or judge the script prints a cost estimate and exits
+unless `--yes` is passed (`--estimate-only` stops after the estimate; `--limit N` for smoke runs).
 
 **Targets:** severity exact ≥ 70% / ±1 ≥ 95%, citation recall ≥ 85%, root-cause score ≥ 0.8.
 
@@ -67,6 +78,7 @@ To check the judge itself, a sample of ~10 judgements is read by hand and agreem
 it doesn't lower any metric beyond noise (re-run once if the difference is small).
 
 **Cost:** estimated before running (queries × (triage + judge) tokens) and confirmed first.
+Results: `results/triage_eval_<model|demo>_<judge>[_<tag>]_<date>.json`.
 
 ---
 

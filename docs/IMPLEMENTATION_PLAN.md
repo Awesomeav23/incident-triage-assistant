@@ -119,18 +119,48 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 ---
 
-## Phase 5 — Triage quality eval ⬜
+## Phase 5 — Triage quality eval 🔄
 **Goal:** a measured accuracy number for Claude's answers. See [EVAL_PLAN.md](EVAL_PLAN.md) §3.
 
 **Tasks**
-- [ ] Ground truth per eval query: expected incident, severity, key root-cause facts
-- [ ] `scripts/eval_triage.py` — severity exact / ±1, citation precision/recall, rubric-graded root cause (LLM judge), latency, tokens/cost per triage
-- [ ] Results → `results/triage_eval_<model>_<date>.json` + summary table
-- [ ] One prompt-tuning pass, re-run, record before/after
-- [ ] Optional: same eval on a second model via `CLAUDE_MODEL` to show the quality/latency trade-off
+- [x] Ground truth: `data/triage_truth.json`, per failure family: expected severity (= the base incident's) and 2 key root-cause facts, each with keywords for the free judge
+- [x] `scripts/eval_triage.py` runs every eval log through the real `/triage` route (redaction, hybrid search, threshold, citation guard); only the triager and judge change
+  - metrics: severity exact / ±1, citation recall / precision, retrieval ceiling, recall when shown, no-match honesty, root-cause score, fix actionable, confidence when right vs wrong, LLM/total latency p50/p95, tokens + actual cost
+  - judges: `keyword` (free, deterministic, 0 or 2 per fact) and `claude` (rubric 0/1/2 per fact + actionable, structured output)
+  - spending guard: any paid component prints an estimate and exits unless `--yes`; `--estimate-only`, `--limit N` for smoke runs, `--model` / `--judge-model` / `--effort`
+  - `ClaudeTriager.last_usage` records input/output tokens per call
+- [x] `tests/test_eval_triage.py` — 20 tests: answer key covers every query and matches the index's severities, keywords credit each family's real diagnosis, scoring, aggregation, cost estimate, guard refuses without `--yes` / without a key
+- [x] Free demo baseline → `results/triage_eval_demo_keyword_2026-11-18.json`
+- [ ] **Paid** baseline run with Claude (needs go-ahead): `python -m scripts.eval_triage --triager claude --judge claude --yes`
+- [ ] Hand-check ~10 judge verdicts against the answers; note agreement
+- [ ] One prompt-tuning pass (citations, latency), re-run with `--tag tuned`, record before/after
+- [ ] Optional: same eval with `--model claude-sonnet-5-5` for the quality/latency trade-off
 
-**Acceptance criteria:** a baseline table committed; README draft cites it.
-**Needs:** `ANTHROPIC_API_KEY` **and the user's explicit go-ahead to spend** (~$3–4 per Opus run). The script, ground truth and rubric are built and tested with fakes first; the paid run waits for approval. Until then the README marks these numbers as pending.
+**Free demo baseline (2026-11-18, keyword judge, 53 queries)**
+
+| Metric | Demo | Target |
+|---|---|---|
+| Severity exact / ±1 | 0.957 / 0.979 | ≥ 0.70 / ≥ 0.95 |
+| Citation recall | 0.936 | ≥ 0.85 |
+| Retrieval ceiling (right family shown at all) | 0.936 | |
+| Citation precision | 0.957 | |
+| No-match honesty | 0.667 | |
+| Root-cause score | 0.936 | ≥ 0.80 |
+| Total latency p50 | 18 ms | < 2 s |
+
+How to read it: demo mode copies the closest past incident, so it is right exactly when retrieval's top hit is right (recall = hit@1 = 0.936), and its root-cause score is partly circular (the answer key was written from those same past incidents). It's the floor Claude has to beat, and a check that the scoring works: right answers score 1.0, wrong ones 0.
+
+Findings:
+- **Retrieval caps Claude too.** 3 of 47 logs never get the right family shown, so Claude can't cite them either, whatever the prompt:
+  - `alembic-multiple-heads` (rank 1, similarity 0.729) and `k8s-crashloop-missing-env` (rank 2, 0.708) are found but sit just under the 0.73 cutoff, which filters each incident separately. In the k8s case two wrong incidents at 0.732 / 0.730 pass while the right one is dropped.
+  - `docker-base-image-missing` isn't in the top 10 at all (a real search miss).
+  - Possible free fix: use the cutoff only to decide "no close match" (on the best similarity) and otherwise show the full top-k, letting Claude judge relevance. Not done yet; needs a decision.
+- **No-match honesty 4/6.** The two no-match logs that clear the threshold get a confident wrong citation in demo mode; Claude's "only cite genuine matches" rule should fix those. The paid run measures it.
+
+**Cost estimates** (chars/4 tokens, ×1.3 margin, list prices): full run ~$2.21 (Opus triage + Opus judge), ~$1.90 with a Sonnet judge, ~$1.59 triage-only with the keyword judge, ~$0.22 for `--limit 5`.
+
+**Acceptance criteria:** a Claude baseline table committed; README draft cites it.
+**Needs:** `ANTHROPIC_API_KEY` **and the user's explicit go-ahead to spend.** Until then the README marks the Claude numbers as pending.
 
 ---
 
