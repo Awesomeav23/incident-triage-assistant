@@ -223,16 +223,22 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 
 ---
 
-## Phase 8 — CI + publish ⬜
+## Phase 8 — CI + publish ✅
 
 **Tasks**
-- [ ] `.github/workflows/ci.yml` — ruff, pytest, pgvector service container, seed + retrieval eval; fail if hit@3 < threshold
-- [ ] CI job for the frontend: `npm ci`, typecheck, `npm test`, `npm run build`
-- [ ] `scripts/bench.py` — N warm triages → p50/p95 for embed / search / LLM / total → `results/bench.json`
-- [ ] README: screenshots, what it does, architecture diagram, quick start, API examples, measured results table, limitations
-- [ ] Final review of docs vs what was built; update ROADMAP to ✅
+- [x] `.github/workflows/ci.yml` — 3 jobs, no secrets, demo mode only:
+  - **backend:** `ruff check`, pytest on a `pgvector/pgvector:pg16` service (+ `triage_test` DB), seed, retrieval gate (hybrid hit@3 ≥ 0.93); pip and embedding-model caches
+  - **frontend:** `npm ci`, typecheck, Vitest, build (Node 20.18.1)
+  - **docker:** builds the API and web images
+- [x] `ruff.toml` (E, F, W, I, B, UP; FastAPI `Depends` idiom allowed) — codebase clean; `ruff==0.17.6` in `requirements-dev.txt`
+- [x] `scripts/eval_retrieval.py --min-hit3 / --gate-mode` exits 1 below the floor
+- [x] `scripts/bench.py` — fresh vs repeat path, p50/p95/max per step → `results/bench_2026-11-19.json`; deletes its own runs
+- [x] README: CI badge, what it does, Mermaid architecture diagram, results tables (each linked to its `results/` file), quick start, API example, safety, limitations
+- [x] Final review of docs vs what was built; ROADMAP all ✅
 
-**Acceptance criteria:** CI green on GitHub; every README number traceable to a file in `results/`.
+**Result (2026-11-19):** CI green on GitHub on the first run. Bench (laptop, demo): fresh p50 25 ms / p95 39 ms, repeat p50 2.5 ms.
+
+**Acceptance criteria:** ✅ CI green; every README number traceable to a file in `results/` (Claude latency is labelled as observed in Phases 3–4, not benchmarked).
 
 ---
 

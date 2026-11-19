@@ -84,11 +84,12 @@ Results: `results/triage_eval_<model|demo>_<judge>[_<tag>]_<date>.json`.
 
 ## 4. Latency + cost — `scripts/bench.py` (Phase 8)
 
-- N = 30 warm requests per log type through the real HTTP API, after 3 warm-up calls
+- N = 30 warm requests per sample log (7 logs) through the real `/triage` route in-process, after 3 warm-up calls
+- Two paths: **fresh** (history bypassed: embed + search + answer) and **repeat** (answered from history)
 - Report p50 / p95 / max for `embed`, `search`, `llm`, `total` (from the response's `latency_ms`) plus client-side wall time
-- Input/output tokens per triage and the resulting cost per triage at list price
-- Run per model if more than one is evaluated
+- Demo mode (free): `llm` is ~0. Claude latency and tokens per triage aren't benchmarked (cost); observed 6.7–15 s per call in Phases 3–4
 - The <2 s target is checked against **total p50**; if it's missed, the README says so and shows the per-step breakdown
+- **Result (2026-11-19):** fresh total p50 25 ms / p95 39 ms (embed 20 ms, search 4.7 ms); repeat p50 2.5 ms. Target met in demo mode, missed with Claude
 
 ---
 
@@ -103,8 +104,8 @@ Results: `results/triage_eval_<model|demo>_<judge>[_<tag>]_<date>.json`.
 
 ## 6. In CI (Phase 8)
 
-- Unit tests (no key, no network)
-- Seed + retrieval eval against a pgvector service container; **fail if hit@3 drops below the committed baseline minus 5 points**
+- `ruff check`, unit + DB tests (no key; Moto in-memory for AWS), frontend typecheck/test/build, Docker image builds
+- Seed + retrieval eval against a pgvector service container; **fail if hybrid hit@3 < 0.93** (baseline 0.979 minus 5 points): `eval_retrieval --mode hybrid --min-hit3 0.93`
 - Triage eval is **not** run in CI (needs a key and costs money); run manually and commit the results
 
 ---

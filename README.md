@@ -1,11 +1,97 @@
 # Incident Triage Assistant
 
-Paste a stack trace or failed CI log → get a plain-English root cause, severity, and
-suggested fix, grounded in similar past incidents (RAG over Postgres + pgvector, answered by Claude).
+[![CI](https://github.com/Awesomeav23/incident-triage-assistant/actions/workflows/ci.yml/badge.svg)](https://github.com/Awesomeav23/incident-triage-assistant/actions/workflows/ci.yml)
 
-**Status:** in progress — see [ROADMAP.md](ROADMAP.md). Full results and architecture land in Phase 8.
+Paste a stack trace or failed CI log → get a plain-English **root cause**, a **severity**, and a
+**suggested fix**, grounded in similar past incidents. Retrieval-augmented generation over
+Postgres + pgvector, answered by Claude, with a React UI and an S3 → Lambda ingestion path.
 
 ![Triage result](docs/screenshots/triage.png)
+<sub>Real Claude output (Opus 5.5), captured once in Phase 4. By default the app runs in free demo mode.</sub>
+
+## What it does
+
+- **Triage:** redact secrets → embed the log locally → hybrid search (vector + full-text, fused with RRF) for
+  similar resolved incidents → Claude writes the diagnosis as validated structured output, citing only incidents it was shown.
+- **Remembers:** every triage is stored. The same failure seen again within an hour (timestamps, IDs and IPs masked)
+  reuses the earlier answer without searching or calling the model.
+- **Learns from feedback:** 👍 or ✏️ correct an answer; a correction can be added to the incident library so the next similar log matches it.
+- **Ingests from CI:** upload a log to S3 `incoming/` → Lambda → `/triage` → `triaged/<job>.json`, with CloudWatch metrics and a critical-severity alarm.
+- **Free by default:** demo mode makes no Claude calls, embeddings run locally, AWS is emulated by Moto. Nothing in tests or CI spends money.
+
+| | |
+|---|---|
+| ![Repeated log](docs/screenshots/duplicate.png) | ![Stats](docs/screenshots/stats.png) |
+| Repeated log answered from history, feedback buttons | Stats page |
+
+## Architecture
+
+```mermaid
+flowchart LR
+    UI[React UI] -->|/api| API[FastAPI /triage]
+    CI[CI job] -->|upload log| S3[(S3 incoming/)]
+    S3 -->|ObjectCreated| L[Lambda handler]
+    L -->|POST /triage| API
+    L -->|result| S3o[(S3 triaged/ or failed/)]
+    API --> R[Redact secrets]
+    R --> F{Seen recently?}
+    F -->|yes| H[(triage_runs)]
+    F -->|no| E[Embed: bge-small, local]
+    E --> S[Hybrid search: pgvector + full-text, RRF]
+    S --> DB[(Postgres + pgvector)]
+    S --> C[Claude: structured output]
+    C --> G[Citation guard]
+    G --> H
+    API --> CW[CloudWatch metrics + alarm]
+    L --> CW
+```
+
+Python 3.13 · FastAPI · Claude API (`claude-opus-5-5`, structured outputs) · PostgreSQL 16 + pgvector ·
+fastembed (BAAI/bge-small-en-v1.5) · React 18 + Vite + TypeScript + Tailwind · Docker · AWS S3 / Lambda / CloudWatch (Moto locally).
+Details: [Architecture](docs/ARCHITECTURE.md) · [Decisions (ADR-001–016)](docs/DECISIONS.md).
+
+## Results
+
+Every number comes from a script in `scripts/` and a file in [`results/`](results/). Dataset: 235 fictional
+incidents in 47 failure families; evals use 53 held-out logs that are never indexed (47 with a real match, 6 without).
+
+**Retrieval** — `python -m scripts.eval_retrieval` → [`retrieval_2026-11-17.json`](results/retrieval_2026-11-17.json)
+
+| Search mode | hit@1 | hit@3 | MRR | search p95 |
+|---|---|---|---|---|
+| Vector (pgvector cosine) | 0.894 | 0.957 | 0.928 | 8.1 ms |
+| Keyword (Postgres full-text) | 0.872 | 0.957 | 0.915 | 7.3 ms |
+| **Hybrid (RRF)** — default | **0.936** | **0.979** | **0.957** | **5.5 ms** |
+
+CI fails if hybrid hit@3 drops below 0.93.
+
+**Answer quality (demo mode)** — `python -m scripts.eval_triage` → [`triage_eval_demo_keyword_2026-11-18.json`](results/triage_eval_demo_keyword_2026-11-18.json)
+
+| Metric | Demo mode | Target |
+|---|---|---|
+| Severity exact / within ±1 | 0.957 / 0.979 | ≥ 0.70 / ≥ 0.95 |
+| Right past incident cited | 0.936 | ≥ 0.85 |
+| Right incident shown to the model at all | 0.979 | |
+| "No match" when there is none | 4 / 6 | |
+
+Demo mode copies the closest past incident, so this is the floor a model must beat. **Claude's own answer quality
+is not measured** (the project stays free); the eval, answer key and Claude-as-judge are built and tested, and a full
+run is estimated at ~$2.21 (`--estimate-only` prints it; `--yes` is required to spend).
+
+**Latency** — `python -m scripts.bench` → [`bench_2026-11-19.json`](results/bench_2026-11-19.json) (210 warm requests per path, laptop)
+
+| Path | p50 | p95 |
+|---|---|---|
+| New log: redact + embed + search (demo answer) | 25 ms | 39 ms |
+| Repeated log answered from history | 2.5 ms | 5.7 ms |
+| Claude call (observed, Phases 3–4, not benchmarked) | 6.7–15 s per call | |
+
+The 2 s end-to-end target holds in demo mode and for repeated logs; **with Claude it is missed**: the model call dominates.
+
+**Noise reduction** — `python -m scripts.replay_noise` → [`replay_noise_2026-11-19.json`](results/replay_noise_2026-11-19.json)
+
+500 logs from 12 failures (fresh timestamps, IDs, IPs) → **12 model calls, 488 avoided (97.6%)**. Best case for exact
+fingerprints: logs that differ in other ways go through retrieval instead.
 
 ## Quick start
 
@@ -19,24 +105,54 @@ python3.13 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m pytest                     # 137 tests, no API key or AWS account needed
 
 cp .env.example .env                           # LLM_MODE=demo by default: free, no Claude calls
-                                               # LLM_MODE=claude + ANTHROPIC_API_KEY for real triage (billed)
 .venv/bin/uvicorn app.main:app --port 8030 --env-file .env   # API docs: http://localhost:8030/docs
 
 cd frontend && npm install && npm run dev      # web UI: http://localhost:5181
 npm test                                       # 32 frontend tests
 ```
 
-**Or everything in containers:** `docker compose --profile app up -d --build` → UI on :5181, API on :8030
-(stop the local uvicorn/Vite first, or set `API_PORT` / `WEB_PORT`).
+- **Everything in containers:** `docker compose --profile app up -d --build` → UI :5181, API :8030
+  (stop local uvicorn/Vite first, or set `API_PORT` / `WEB_PORT`).
+- **Cloud workflow:** with the API running, `python -m scripts.simulate_s3_ingest` uploads sample logs to the emulated
+  bucket, runs the Lambda handler on each, and lists `triaged/`, `failed/` and the CloudWatch metrics.
+  For API metrics, start the API with `METRICS_ENABLED=true AWS_ENDPOINT_URL=http://127.0.0.1:4567`.
+- **Real Claude (billed per call):** set `LLM_MODE=claude` and `ANTHROPIC_API_KEY` in `.env`. Roughly 2–4 ¢ per triage with Opus.
 
-**Cloud workflow (S3 → Lambda → triage → S3):** with the API running,
-`.venv/bin/python -m scripts.simulate_s3_ingest` uploads sample logs to the emulated bucket,
-runs the Lambda handler on each upload, and lists the results and CloudWatch metrics.
+## API
 
-**Evals (free):** `python -m scripts.eval_retrieval` (search quality), `python -m scripts.eval_triage`
-(answer quality, demo mode), `python -m scripts.replay_noise` (calls avoided by duplicate reuse).
+```bash
+curl -s localhost:8030/triage -H 'Content-Type: application/json' \
+  -d '{"log": "redis.exceptions.ConnectionError: Error 111 connecting to 10.0.7.12:6379. Connection refused."}'
+```
+```json
+{ "root_cause_summary": "...", "severity": "critical", "severity_score": 5, "suggested_fix": "...",
+  "next_steps": ["..."], "matched_incident_ids": [21], "confidence": 0.89,
+  "similar_incidents": [{ "id": 21, "title": "Redis ConnectionError after ElastiCache failover", "similarity": 0.89, "...": "..." }],
+  "no_close_match": false, "redacted_secrets": 0, "latency_ms": { "embed": 20, "search": 5, "llm": 0, "total": 25 },
+  "model": "demo", "run_id": 42, "duplicate_of": null, "duplicate_count": 0 }
+```
+
+Also: `POST /feedback`, `GET /stats`, `GET /incidents`, `GET /incidents/{id}`, `POST /index-incident`, `GET /samples`,
+`GET /health`. Contracts in [ARCHITECTURE.md §6](docs/ARCHITECTURE.md); interactive docs at `/docs`.
+
+## Safety
+
+- Secrets (keys, tokens, passwords, PEM blocks, URL credentials) are redacted before embedding, storage or the model.
+- Logs are untrusted: they sit inside tags the log can't close, and the prompt says to ignore instructions in them.
+- The model can only cite incidents it was shown (citation guard); answers marked wrong are never reused.
+- Paid calls need an explicit switch: `LLM_MODE=claude` for the app, `RUN_LIVE=1` for the live test, `--yes` for the eval.
+
+## Limitations
+
+- Claude's answer quality and latency aren't benchmarked here (cost); the 2 s target is missed with Claude (~7–15 s per call).
+- The dataset is fictional and small (47 failure families); real incident history would need re-tuning (`MIN_SIMILARITY`, see ADR-004b).
+- "No match" detection is imperfect: similarity ranges overlap, so 2 of 6 no-match logs still get a (weak) match shown.
+- Duplicate reuse is exact-fingerprint only; near-duplicates go through search instead.
+- AWS runs on Moto: the alarm is stored but not evaluated, and the Lambda is invoked by a script, not by a real S3 notification.
+  The code is the same for real AWS; deploying it is an optional extra.
+- Secret redaction is regex-based and best-effort.
 
 ## Docs
-[Requirements](docs/REQUIREMENTS.md) · [Architecture](docs/ARCHITECTURE.md) ·
-[Decisions](docs/DECISIONS.md) · [Implementation plan](docs/IMPLEMENTATION_PLAN.md) ·
-[Eval plan](docs/EVAL_PLAN.md)
+
+[Requirements](docs/REQUIREMENTS.md) · [Architecture](docs/ARCHITECTURE.md) · [Decisions](docs/DECISIONS.md) ·
+[Implementation plan](docs/IMPLEMENTATION_PLAN.md) · [Eval plan](docs/EVAL_PLAN.md) · [Roadmap](ROADMAP.md)

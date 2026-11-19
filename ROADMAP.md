@@ -13,13 +13,14 @@ Task-level detail: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 | 5 | Triage quality eval | ✅ | Eval + answer key + free demo baseline; cutoff fix (right incident shown 44→46 of 47). Claude numbers not measured (staying free) |
 | 6 | Feedback loop + noise reduction | ✅ | Repeated logs answered from history (500-log burst → 12 model calls, 97.6% avoided), 👍/✏️ feedback, Stats page |
 | 7 | Cloud workflow | ✅ | S3 upload → Lambda → `/triage` → `triaged/`, CloudWatch metrics + alarm on Moto; API + web in Docker |
-| 8 | CI + publish | ⬜ | GitHub Actions, latency bench, README with screenshots and results |
+| 8 | CI + publish | ✅ | GitHub Actions (lint, 137 + 32 tests, retrieval gate, Docker builds), latency bench, final README |
 
-## Next up (as of 2026-11-19)
+## Status (as of 2026-11-19)
 
-- **Now:** Phase 8, CI + publish: GitHub Actions (backend + frontend tests, retrieval eval gate), latency bench, final README with results and screenshots.
-- **Staying free (decided 2026-11-18):** the app defaults to `LLM_MODE=demo` (no Claude calls). Claude-quality numbers are marked "not measured (demo mode)". Paid runs (`--triager claude`, `LLM_MODE=claude`, `RUN_LIVE=1`) only after an explicit go-ahead with a cost estimate; the eval script refuses them without `--yes`.
-- **If credits are ever added:** `python -m scripts.eval_triage --triager claude --judge claude --limit 5 --yes` (~$0.22) first, then the full run (~$2.21).
+**All 8 phases done.** Everything runs free: demo mode (no Claude calls), local embeddings, AWS on Moto, CI without secrets.
+
+- **Free by default:** paid runs (`LLM_MODE=claude`, `RUN_LIVE=1`, `eval_triage --triager claude --yes`) only after an explicit go-ahead with a cost estimate.
+- **Optional extras, not planned:** Claude answer-quality run (~$2.21, or ~$0.22 for `--limit 5`); real AWS deploy (needs a paid AWS account); Bedrock provider switch.
 - **Running locally:** `docker compose up -d db moto`, `uvicorn app.main:app --port 8030 --env-file .env`, `cd frontend && npm run dev` → http://localhost:5181. Or everything in containers: `docker compose --profile app up -d --build`. S3 flow: `python -m scripts.simulate_s3_ingest`
 
 ## Docs
