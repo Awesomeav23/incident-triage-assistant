@@ -19,6 +19,9 @@ export function makeResult(overrides: Partial<TriageResponse> = {}): TriageRespo
     redacted_secrets: 0,
     latency_ms: { embed: 15, search: 4, llm: 7200, total: 7219 },
     model: "claude-opus-5-5",
+    run_id: 7,
+    duplicate_of: null,
+    duplicate_count: 0,
     ...overrides,
   };
 }

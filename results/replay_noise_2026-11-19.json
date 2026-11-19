@@ -1,0 +1,77 @@
+{
+  "run_at": "2026-11-19T17:16:06+00:00",
+  "config": {
+    "logs": 500,
+    "failures": 12,
+    "seed": 42,
+    "dedup_window_min": 60,
+    "triager": "demo"
+  },
+  "metrics": {
+    "logs": 500,
+    "distinct_failures": 12,
+    "unique_fingerprints": 12,
+    "model_calls": 12,
+    "model_calls_avoided": 488,
+    "reduction": 0.976,
+    "wall_s": 3.0,
+    "total_ms_p50": 2.3,
+    "est_claude_time_saved_min": 73.2,
+    "est_claude_cost_saved_usd": 14.64
+  },
+  "assumptions": {
+    "live_llm_ms": 9000,
+    "cost_per_call_usd": 0.03,
+    "note": "Claude time/cost saved are estimates; this replay runs in demo mode"
+  },
+  "per_family": {
+    "alembic-multiple-heads": {
+      "logs": 174,
+      "model_calls": 1
+    },
+    "java-npe-missing-address": {
+      "logs": 52,
+      "model_calls": 1
+    },
+    "redis-slow-command-timeout": {
+      "logs": 42,
+      "model_calls": 1
+    },
+    "kafka-rebalance-storm": {
+      "logs": 20,
+      "model_calls": 1
+    },
+    "pg-statement-timeout": {
+      "logs": 28,
+      "model_calls": 1
+    },
+    "terraform-state-lock": {
+      "logs": 71,
+      "model_calls": 1
+    },
+    "aws-expired-token": {
+      "logs": 15,
+      "model_calls": 1
+    },
+    "node-unhandled-rejection": {
+      "logs": 24,
+      "model_calls": 1
+    },
+    "tls-cert-expired": {
+      "logs": 16,
+      "model_calls": 1
+    },
+    "k8s-oomkilled": {
+      "logs": 14,
+      "model_calls": 1
+    },
+    "pg-too-many-clients": {
+      "logs": 23,
+      "model_calls": 1
+    },
+    "docker-base-image-missing": {
+      "logs": 21,
+      "model_calls": 1
+    }
+  }
+}

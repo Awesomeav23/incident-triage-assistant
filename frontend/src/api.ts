@@ -1,10 +1,13 @@
 import type {
+  FeedbackIn,
+  FeedbackOut,
   Health,
   IncidentDetail,
   IncidentIn,
   IncidentPage,
   Sample,
   Severity,
+  Stats,
   TriageRequest,
   TriageResponse,
 } from "./types";
@@ -67,6 +70,9 @@ export const api = {
     if (params.includeSynthetic === false) qs.set("include_synthetic", "false");
     return request<IncidentPage>(`/incidents?${qs}`);
   },
+  feedback: (fb: FeedbackIn) =>
+    request<FeedbackOut>("/feedback", { method: "POST", body: JSON.stringify(fb) }),
+  stats: (recent = 10) => request<Stats>(`/stats?recent=${recent}`),
   incident: (id: number) => request<IncidentDetail>(`/incidents/${id}`),
   addIncident: (inc: IncidentIn) =>
     request<{ id: number; title: string }>("/index-incident", {

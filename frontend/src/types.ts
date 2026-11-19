@@ -39,6 +39,50 @@ export interface TriageResponse {
   redacted_secrets: number;
   latency_ms: { embed: number; search: number; llm: number; total: number };
   model: string;
+  run_id: number | null; // send feedback for this id
+  duplicate_of: number | null; // set when the result was reused for a repeated log
+  duplicate_count: number; // times the log was seen again after the first triage
+}
+
+export interface FeedbackIn {
+  triage_run_id: number;
+  correct: boolean;
+  root_cause?: string;
+  fix?: string;
+  severity?: Severity;
+  index?: boolean;
+  title?: string;
+  service?: string;
+}
+
+export interface FeedbackOut {
+  id: number;
+  triage_run_id: number;
+  correct: boolean;
+  indexed_as: number | null;
+}
+
+export interface RunSummary {
+  id: number;
+  created_at: string;
+  model: string;
+  severity: Severity;
+  summary: string;
+  duplicate_count: number;
+  feedback: "correct" | "incorrect" | null;
+}
+
+export interface Stats {
+  incidents_indexed: number;
+  triage_requests: number;
+  triage_runs: number;
+  duplicates_suppressed: number;
+  feedback_count: number;
+  feedback_correct: number;
+  feedback_accuracy: number | null;
+  indexed_from_feedback: number;
+  severity_counts: Record<Severity, number>;
+  recent_runs: RunSummary[];
 }
 
 export interface IncidentSummary {

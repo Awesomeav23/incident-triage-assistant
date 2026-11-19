@@ -96,6 +96,8 @@ Results: `results/triage_eval_<model|demo>_<judge>[_<tag>]_<date>.json`.
 
 - Generate a burst of logs from a small number of distinct failures (e.g. 500 logs, 12 failures) with randomised timestamps, request IDs and IPs
 - Replay through `/triage` and report: total logs, LLM calls made, calls avoided by dedup, % reduction, time saved (avoided calls × mean LLM latency)
+- Runs in demo mode (free); Claude time/cost saved are estimates (9 s, $0.03 per call from Phase 3). Only runs created by the replay count, and they're deleted afterwards unless `--keep`
+- **Result (2026-11-19):** 500 logs, 12 failures → 12 model calls, 488 avoided (97.6%)
 
 ---
 

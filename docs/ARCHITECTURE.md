@@ -47,7 +47,7 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 
 1. **Validate** — Pydantic: 10 ≤ len(log) ≤ 50,000; `top_k` 1–10.
 2. **Redact** secrets (Phase 3).
-3. **Fingerprint** — SHA-256 of the normalised log; if seen within the dedup window, return the cached result (Phase 6).
+3. **Fingerprint** — SHA-256 of the whole log with noise masked; if the same model triaged it within the dedup window (and nobody marked that answer wrong), return the stored result and stop here (Phase 6).
 4. **Embed** — normalised log → 384-dim vector (bge-small, local ONNX).
 5. **Search** — vector top-N + full-text top-N, merged with reciprocal rank fusion (Phase 2); drop matches below the similarity threshold; keep the best incident per failure family (Phase 4, ADR-013).
 6. **LLM** — system prompt + `<past_incidents>` JSON + `<new_log>` → Claude → validated `LLMTriage`.
@@ -107,12 +107,12 @@ CREATE INDEX ON triage_runs (fingerprint, created_at DESC);
 
 CREATE TABLE feedback (
     id            SERIAL PRIMARY KEY,
-    triage_run_id INT NOT NULL REFERENCES triage_runs(id),
+    triage_run_id INT NOT NULL UNIQUE REFERENCES triage_runs(id) ON DELETE CASCADE,  -- one per run
     correct       BOOLEAN NOT NULL,
     root_cause    TEXT,                    -- engineer's correction
     fix           TEXT,
     severity      TEXT,
-    indexed_as    INT REFERENCES incidents(id),
+    indexed_as    INT REFERENCES incidents(id) ON DELETE SET NULL,
     created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
 );
 ```
@@ -155,10 +155,11 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 - `GET /incidents/{id}` → full incident including `log_text`
 - `GET /samples` → `[{ "name": "Redis failover", "log": "..." }]`
 
-### Later phases
-- `POST /feedback` — `{ "triage_run_id": 12, "correct": false, "root_cause": "...", "fix": "...", "index": true }`
-- `GET /stats` — `{ "incidents_indexed": 214, "triages": 530, "duplicates_suppressed": 401, "feedback_accuracy": 0.82 }`
-- `GET /health` — `{ "status": "ok", "incidents_indexed": 214 }`
+### Phase 6
+- `/triage` responses add `run_id` (send feedback for it), `duplicate_of` (set when reused from history) and `duplicate_count`
+- `POST /feedback` → 201 — `{ "triage_run_id": 12, "correct": false, "root_cause": "...", "fix": "...", "severity": "high", "index": true, "title": "...", "service": "..." }` → `{ "id": 3, "triage_run_id": 12, "correct": false, "indexed_as": 236 }`. 404 unknown run · 409 already has feedback · 422 `index` on a correction without root cause and fix
+- `GET /stats?recent=10` — `{ "incidents_indexed": 235, "triage_requests": 40, "triage_runs": 10, "duplicates_suppressed": 30, "feedback_count": 4, "feedback_correct": 3, "feedback_accuracy": 0.75, "indexed_from_feedback": 1, "severity_counts": {...}, "recent_runs": [...] }`
+- `GET /health` — `{ "status": "ok", "incidents_indexed": 235, "llm_mode": "demo" }`
 
 ## 7. Prompt design
 
@@ -179,7 +180,7 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 | `TOP_K` | `3` | Default retrieval depth |
 | `SEARCH_MODE` | `hybrid` | `vector` / `keyword` / `hybrid` |
 | `MIN_SIMILARITY` | `0.73` | "No close match" cutoff (cosine): if none of the top k reaches it, nothing close is shown (ADR-004b) |
-| `DEDUP_WINDOW_MIN` | `60` | Phase 6 duplicate window |
+| `DEDUP_WINDOW_MIN` | `60` | Reuse a stored result for the same log within this many minutes; `0` = off |
 | `METRICS_ENABLED` | `false` | CloudWatch publishing |
 | `AWS_ENDPOINT_URL` | — | `http://localhost:4567` for Moto |
 

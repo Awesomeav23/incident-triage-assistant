@@ -267,3 +267,13 @@ def _vec():
     import numpy as np
     v = np.ones(settings.embed_dim, dtype=np.float32)
     return v / np.linalg.norm(v)
+
+
+def test_replay_variants_differ_in_text_but_share_a_fingerprint():
+    import random
+
+    from scripts.replay_noise import randomize
+    rng = random.Random(1)
+    a, b = randomize(LOG, rng), randomize(LOG, rng)
+    assert a != b
+    assert fingerprint(a) == fingerprint(b) != fingerprint(randomize(OTHER, rng))

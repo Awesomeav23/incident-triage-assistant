@@ -163,19 +163,33 @@ How to read it: demo mode copies the closest past incident, so it's right exactl
 
 ---
 
-## Phase 6 — Feedback loop + noise reduction ⬜
-**Covers:** FR-10 to FR-13.
+## Phase 6 — Feedback loop + noise reduction ✅
+**Covers:** FR-10 to FR-13. See ADR-010.
 
-**Tasks**
-- [ ] Tables `triage_runs`, `feedback` (ARCHITECTURE §5)
-- [ ] Fingerprint = SHA-256 of the normalised, redacted log; cached hit within `DEDUP_WINDOW_MIN` → return the stored result + `duplicate_of`, `duplicate_count`
-- [ ] `POST /feedback`; when `index: true`, create an incident from the confirmed/corrected triage
-- [ ] `GET /stats`
-- [ ] Frontend: feedback buttons on the result card (👍 correct / ✏️ correct it → form), duplicate badge ("seen 37 times"), Stats page
-- [ ] `scripts/replay_noise.py` — replay a burst (e.g. 500 logs from 12 distinct failures with varying timestamps/IDs) → LLM calls made vs avoided
-- [ ] Tests for dedup window, feedback → indexing
+**Backend**
+- [x] Tables `triage_runs`, `feedback` (one feedback per run, `UNIQUE`); created by `PgRunStore` in `app/history.py`, sharing the incident store's connection pool
+- [x] Fingerprint = SHA-256 of the **whole** redacted log with timestamps/UUIDs/IPs/addresses/hashes masked (not the embedding's head+tail cut, so long logs differing in the middle don't collide)
+- [x] `/triage`: same fingerprint + same model within `DEDUP_WINDOW_MIN` (60; 0 = off) → stored result returned with `duplicate_of`, `duplicate_count`; no embed, search or model call. Every response carries `run_id`
+- [x] Runs marked **wrong** are never reused: the next repeat gets a fresh answer
+- [x] `POST /feedback`: 👍 / correction (root cause, fix, severity); `index: true` adds the log as a new incident (confirmed → joins the cited incident's family; corrected → new, needs root cause + fix). 404 unknown run, 409 second feedback, 422 correction without root cause/fix
+- [x] `GET /stats`: requests, model runs, duplicates answered from history, feedback accuracy, incidents added from feedback, severity counts, recent runs
+- [x] `scripts/eval_triage.py` uses `NullRunStore`: evals never reuse or record runs
 
-**Acceptance criteria:** the replay reports calls avoided; a corrected triage is retrievable on the next similar log.
+**Frontend**
+- [x] Result card: "Seen N times" banner on reused results; "Was this right?" 👍 Correct / ✏️ Correct it (form with root cause, fix, severity, "add to the incident library", optional title/service)
+- [x] Stats page (`/stats`): 4 tiles, severity bars, recent triages with feedback marks; no horizontal scroll at 390 px
+
+**Replay — `scripts/replay_noise.py`** (demo mode, free; deletes its own runs unless `--keep`)
+
+| Logs | Distinct failures | Model calls | Avoided | Reduction |
+|---|---|---|---|---|
+| 500 | 12 | 12 | 488 | **97.6%** |
+
+Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs and addresses, skewed so a few failures dominate (like a crash loop). This is the best case for exact-fingerprint dedup: logs that differ in other ways (pod names, line numbers) aren't merged here and go through retrieval instead. If Claude were on, the 488 avoided calls would be ~73 min of model time and ~$15 (estimate: 9 s and $0.03 per call from Phase 3, not measured here) → `results/replay_noise_2026-11-19.json`.
+
+**Tests:** backend +24 (fingerprint, guesses, dedup, window, wrong-not-reused, secrets masked before fingerprinting, feedback paths, stats, real SQL on `triage_test` incl. window expiry) → 117 passed, 1 live skipped. Frontend +11 → 32 passed. Typecheck + build clean. Checked in Chrome: repeat triage shows "Seen 2 times", 👍 saves, Stats updates (`docs/screenshots/duplicate.png`, `stats.png`).
+
+**Found while building:** the first `/triage` change made the existing API tests write runs into the real database (the run store wasn't overridden). Caught by a failing test, the 2 rows removed, and `fakes` now overrides the run store so tests can't touch it.
 
 ---
 

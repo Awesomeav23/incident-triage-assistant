@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
 import { api } from "./api";
 import { IncidentsPage } from "./pages/IncidentsPage";
+import { StatsPage } from "./pages/StatsPage";
 import { TriagePage } from "./pages/TriagePage";
 
 export function App() {
@@ -13,6 +14,7 @@ export function App() {
           <nav className="flex gap-1 text-sm">
             <Tab to="/">Triage</Tab>
             <Tab to="/incidents">Incidents</Tab>
+            <Tab to="/stats">Stats</Tab>
           </nav>
           <HealthIndicator />
         </div>
@@ -21,6 +23,7 @@ export function App() {
         <Routes>
           <Route path="/" element={<TriagePage />} />
           <Route path="/incidents" element={<IncidentsPage />} />
+          <Route path="/stats" element={<StatsPage />} />
         </Routes>
       </main>
     </div>
