@@ -1,0 +1,60 @@
+{
+  "run_at": "2026-11-19T17:32:00+00:00",
+  "git_sha": "7599992",
+  "config": {
+    "n_per_log": 30,
+    "warmup": 3,
+    "logs": 7,
+    "triager": "demo",
+    "search_mode": "hybrid",
+    "embed_model": "BAAI/bge-small-en-v1.5",
+    "indexed": 235
+  },
+  "fresh_ms": {
+    "embed": {
+      "p50": 20.2,
+      "p95": 29.1,
+      "max": 51.5,
+      "mean": 20.0
+    },
+    "search": {
+      "p50": 4.7,
+      "p95": 7.8,
+      "max": 14.4,
+      "mean": 5.2
+    },
+    "llm": {
+      "p50": 0.0,
+      "p95": 0.0,
+      "max": 6.4,
+      "mean": 0.0
+    },
+    "total": {
+      "p50": 25.2,
+      "p95": 39.3,
+      "max": 57.0,
+      "mean": 25.3
+    },
+    "client_wall": {
+      "p50": 27.6,
+      "p95": 42.3,
+      "max": 59.6,
+      "mean": 28.4
+    }
+  },
+  "repeat_ms": {
+    "total": {
+      "p50": 2.5,
+      "p95": 5.7,
+      "max": 44.1,
+      "mean": 3.2
+    },
+    "client_wall": {
+      "p50": 4.5,
+      "p95": 9.9,
+      "max": 49.7,
+      "mean": 5.5
+    }
+  },
+  "note": "Demo mode: 'llm' is ~0. Claude measured separately at 6.7-15 s per call (Phases 3-4)."
+}

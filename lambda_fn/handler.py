@@ -20,7 +20,7 @@ import os
 import time
 import urllib.error
 import urllib.request
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from urllib.parse import unquote_plus
 
 import boto3
@@ -114,7 +114,7 @@ def process_record(s3, record: dict) -> dict:
         # Our own triaged/ and failed/ writes must never re-trigger triage.
         return {"source": source, "status": "skipped"}
 
-    now = datetime.now(timezone.utc).isoformat(timespec="seconds")
+    now = datetime.now(UTC).isoformat(timespec="seconds")
     try:
         text, truncated = prepare_log(s3.get_object(Bucket=bucket, Key=key)["Body"].read())
         if len(text.strip()) < MIN_LOG_CHARS:
@@ -152,7 +152,7 @@ def s3_event(bucket: str, key: str, size: int = 0) -> dict:
 
     return {"Records": [{
         "eventVersion": "2.1", "eventSource": "aws:s3", "awsRegion": "us-east-1",
-        "eventTime": datetime.now(timezone.utc).isoformat(), "eventName": "ObjectCreated:Put",
+        "eventTime": datetime.now(UTC).isoformat(), "eventName": "ObjectCreated:Put",
         "s3": {"s3SchemaVersion": "1.0", "bucket": {"name": bucket, "arn": f"arn:aws:s3:::{bucket}"},
                "object": {"key": quote_plus(key, safe="/"), "size": size}},
     }]}

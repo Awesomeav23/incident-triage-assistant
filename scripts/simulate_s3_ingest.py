@@ -65,7 +65,7 @@ def main() -> None:
         ensure_resources(s3, cw)
     except Exception as e:
         raise SystemExit(f"Can't reach the AWS emulator at {args.endpoint} ({e}). "
-                         "Start it: docker compose up -d moto")
+                         "Start it: docker compose up -d moto") from e
 
     samples = json.load(open("data/samples.json"))[: args.count]
     uploads = [(s["name"], s["log"]) for s in samples]

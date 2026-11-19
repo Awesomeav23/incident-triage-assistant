@@ -19,10 +19,11 @@ import json
 import os
 import statistics
 import sys
+from collections.abc import Callable
 from dataclasses import dataclass, field
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
-from typing import Callable, Literal, Protocol
+from typing import Literal, Protocol
 
 from pydantic import BaseModel, Field
 
@@ -363,8 +364,8 @@ def main() -> None:
     # Heavy imports here so the scoring functions above import without a DB or model.
     from fastapi.testclient import TestClient
 
-    from app.llm import SYSTEM_PROMPT, ClaudeTriager, DemoTriager, build_user_message, get_triager
     from app.history import NullRunStore
+    from app.llm import SYSTEM_PROMPT, ClaudeTriager, DemoTriager, build_user_message, get_triager
     from app.main import app, get_runs, get_store
     from app.rag import get_embedder
     from app.redact import redact
@@ -421,7 +422,7 @@ def main() -> None:
 
     model_tag = triager_model or "demo"
     out = {
-        "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "git_sha": git_sha(),
         "config": {"triager": args.triager, "model": triager_model, "effort": args.effort if triager_model else None,
                    "judge": args.judge, "judge_model": judge_model, "top_k": args.top_k,

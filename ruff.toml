@@ -1,0 +1,13 @@
+line-length = 120
+target-version = "py312"
+extend-exclude = ["frontend"]
+
+[lint]
+select = ["E", "F", "W", "I", "B", "UP"]
+ignore = [
+    "B008",   # FastAPI's Depends() in defaults is the framework's idiom
+    "UP042",  # keep (str, Enum): StrEnum changes str() output
+]
+
+[lint.per-file-ignores]
+"scripts/expand_dataset.py" = ["E501"]  # long synthetic log strings

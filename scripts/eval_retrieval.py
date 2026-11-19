@@ -11,7 +11,7 @@ import argparse
 import json
 import subprocess
 import time
-from datetime import date, datetime, timezone
+from datetime import UTC, date, datetime
 from pathlib import Path
 
 from app.config import settings
@@ -98,7 +98,11 @@ def main() -> None:
     p.add_argument("--k", type=int, default=10, help="depth searched for MRR")
     p.add_argument("--no-distinct", dest="distinct", action="store_false",
                    help="rank raw incidents instead of one per family (what /triage does)")
+    p.add_argument("--min-hit3", type=float, help="exit 1 if hit@3 of --gate-mode is below this")
+    p.add_argument("--gate-mode", choices=SEARCH_MODES, default="hybrid")
     args = p.parse_args()
+    if args.min_hit3 is not None and args.mode not in ("all", args.gate_mode):
+        p.error("--gate-mode must be one of the modes being run")
 
     queries = json.load(open(args.queries))
     store, embedder = IncidentStore(), get_embedder()
@@ -111,7 +115,7 @@ def main() -> None:
 
     n_match = sum(1 for q in queries if q["expected_family"])
     out = {
-        "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "git_sha": git_sha(),
         "config": {"embed_model": settings.embed_model, "k": args.k, "distinct_families": args.distinct},
         "dataset": {"indexed": store.count(), "queries": len(queries),
@@ -131,7 +135,8 @@ def main() -> None:
     print(f"{'mode':<9}" + "".join(f"{c:>15}" for c in cols))
     for m, r in runs.items():
         print(f"{m:<9}" + "".join(f"{r['metrics'][c]:>15}" for c in cols))
-    print(f"\nembed p50/p95 ms: {runs[modes[0]]['metrics']['embed_ms_p50']} / {runs[modes[0]]['metrics']['embed_ms_p95']}")
+    m0 = runs[modes[0]]["metrics"]
+    print(f"\nembed p50/p95 ms: {m0['embed_ms_p50']} / {m0['embed_ms_p95']}")
 
     print(f"\nmisses ({best_mode}, rank != 1):")
     for r in runs[best_mode]["per_query"]:
@@ -140,8 +145,16 @@ def main() -> None:
     t = threshold
     print(f"\nno-match threshold: {t['threshold']}  (keeps {t['correct_matches_kept']:.0%} of correct matches, "
           f"rejects {t['no_match_rejected']:.0%} of no-match logs)")
-    print(f"  lowest correct-match similarity {t['correct_sim_min']}, highest no-match similarity {t['no_match_sim_max']}")
+    print(f"  lowest correct-match similarity {t['correct_sim_min']}, "
+          f"highest no-match similarity {t['no_match_sim_max']}")
     print(f"\nbest mode: {best_mode}    saved {path}")
+
+    # CI gate (EVAL_PLAN §6): fail if search quality drops below the committed baseline.
+    if args.min_hit3 is not None:
+        got = runs[args.gate_mode]["metrics"]["hit@3"]
+        if got < args.min_hit3:
+            raise SystemExit(f"FAIL: {args.gate_mode} hit@3 {got} < required {args.min_hit3}")
+        print(f"gate ok: {args.gate_mode} hit@3 {got} >= {args.min_hit3}")
 
 
 if __name__ == "__main__":

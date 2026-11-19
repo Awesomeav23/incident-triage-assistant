@@ -2,3 +2,4 @@
 -r requirements.txt
 pytest==9.2.0
 moto[s3,cloudwatch]==5.2.5
+ruff==0.17.6

@@ -40,7 +40,8 @@ def test_fingerprint_uses_the_whole_long_log():
 
 
 def test_guess_error_type_takes_innermost():
-    log = "Traceback ...\nFooError: outer\nThe above exception was the direct cause\nredis.exceptions.ConnectionError: x"
+    log = ("Traceback ...\nFooError: outer\nThe above exception was the direct cause\n"
+           "redis.exceptions.ConnectionError: x")
     assert guess_error_type(log) == "redis.exceptions.ConnectionError"
     assert guess_error_type("exit code 1") == "unknown"
 

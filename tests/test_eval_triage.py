@@ -6,9 +6,9 @@ import pytest
 
 from app.models import Severity
 from scripts.eval_triage import (
+    PRICES,
     Case,
     KeywordJudge,
-    PRICES,
     Verdict,
     aggregate,
     build_judge_message,

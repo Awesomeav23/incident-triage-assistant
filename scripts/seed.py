@@ -26,7 +26,7 @@ def main() -> None:
     t0 = time.perf_counter()
     vectors = get_embedder().embed_many([i.log_text for i in incidents])
     t1 = time.perf_counter()
-    for inc, vec in zip(incidents, vectors):
+    for inc, vec in zip(incidents, vectors, strict=True):
         store.add(inc, vec)
     t2 = time.perf_counter()
 

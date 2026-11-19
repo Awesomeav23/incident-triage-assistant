@@ -16,7 +16,7 @@ import json
 import random
 import statistics
 import time
-from datetime import date, datetime, timedelta, timezone
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 from app.history import PgRunStore, fingerprint
@@ -28,7 +28,7 @@ COST_PER_CALL = 0.03  # USD, ~2,000 input + ~700 output tokens at Opus list pric
 
 def randomize(log: str, rng: random.Random) -> str:
     """Same failure, new run-specific noise."""
-    ts = datetime(2026, 11, 18, tzinfo=timezone.utc) + timedelta(seconds=rng.randrange(86400))
+    ts = datetime(2026, 11, 18, tzinfo=UTC) + timedelta(seconds=rng.randrange(86400))
     uuid = "-".join(f"{rng.getrandbits(n * 4):0{n}x}" for n in (8, 4, 4, 4, 12))
     ip = ".".join(str(rng.randrange(1, 255)) for _ in range(4))
     addr = f"0x{rng.getrandbits(48):012x}"
@@ -107,7 +107,7 @@ def main() -> None:
 
     unique_fps = len({fingerprint(log) for _, log in burst})
     out = {
-        "run_at": datetime.now(timezone.utc).isoformat(timespec="seconds"),
+        "run_at": datetime.now(UTC).isoformat(timespec="seconds"),
         "config": {"logs": args.logs, "failures": args.failures, "seed": args.seed,
                    "dedup_window_min": settings.dedup_window_min, "triager": "demo"},
         "metrics": {
