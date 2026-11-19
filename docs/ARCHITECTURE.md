@@ -38,6 +38,7 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 | Retrieval | `app/rag.py` | Log normalisation, embeddings, pgvector + full-text search, DB access |
 | LLM | `app/llm.py` | Prompt construction, Claude call, error/refusal handling |
 | Redaction | `app/redact.py` (Phase 3) | Strip secrets from logs before storage or LLM |
+| History | `app/history.py` (Phase 6) | `triage_runs` / `feedback` tables, fingerprint, duplicate reuse, stats; `NullRunStore` for evals |
 | Metrics | `app/metrics.py` | CloudWatch `put_metric_data`, never raises |
 | Config | `app/config.py` | Env-var settings |
 | Lambda | `lambda_fn/handler.py` (Phase 7) | S3 event → `/triage` → `triaged/` or `failed/` + ingest metrics; boto3 + stdlib only |
@@ -130,7 +131,7 @@ CREATE TABLE feedback (
 → `{ "id": 5, "title": "Redis ConnectionError after ElastiCache failover" }`
 
 ### `POST /triage` → 200
-Request: `{ "log": "Traceback ...", "service": "rate-limiter", "top_k": 3 }`
+Request: `{ "log": "Traceback ...", "service": "rate-limiter", "top_k": 3 }` — `log` required (10–50,000 chars); `top_k` 1–10, default `TOP_K` (3); `service` is accepted but not used yet.
 
 Response:
 ```json
@@ -160,7 +161,7 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 - `/triage` responses add `run_id` (send feedback for it), `duplicate_of` (set when reused from history) and `duplicate_count`
 - `POST /feedback` → 201 — `{ "triage_run_id": 12, "correct": false, "root_cause": "...", "fix": "...", "severity": "high", "index": true, "title": "...", "service": "..." }` → `{ "id": 3, "triage_run_id": 12, "correct": false, "indexed_as": 236 }`. 404 unknown run · 409 already has feedback · 422 `index` on a correction without root cause and fix
 - `GET /stats?recent=10` — `{ "incidents_indexed": 235, "triage_requests": 40, "triage_runs": 10, "duplicates_suppressed": 30, "feedback_count": 4, "feedback_correct": 3, "feedback_accuracy": 0.75, "indexed_from_feedback": 1, "severity_counts": {...}, "recent_runs": [...] }`
-- `GET /health` — `{ "status": "ok", "incidents_indexed": 235, "llm_mode": "demo" }`
+- `GET /health` — `{ "status": "ok", "db": "up", "incidents_indexed": 235, "llm_mode": "demo" }`; database down → 503 `{ "status": "degraded", "db": "down", "incidents_indexed": null, "llm_mode": "demo" }`
 
 ## 7. Prompt design
 
@@ -178,12 +179,19 @@ Errors: `422` invalid input · `502` LLM error/refusal/no structured output · `
 | `CLAUDE_MODEL` | `claude-opus-5-5` | Triage model |
 | `CLAUDE_EFFORT` | `low` | Thinking effort (latency vs depth) |
 | `EMBED_MODEL` / `EMBED_DIM` | `BAAI/bge-small-en-v1.5` / `384` | Embeddings |
-| `TOP_K` | `3` | Default retrieval depth |
+| `TOP_K` | `3` | Default `top_k` for `/triage` when the request doesn't set it |
 | `SEARCH_MODE` | `hybrid` | `vector` / `keyword` / `hybrid` |
 | `MIN_SIMILARITY` | `0.73` | "No close match" cutoff (cosine): if none of the top k reaches it, nothing close is shown (ADR-004b) |
 | `DEDUP_WINDOW_MIN` | `60` | Reuse a stored result for the same log within this many minutes; `0` = off |
 | `METRICS_ENABLED` | `false` | CloudWatch publishing |
 | `AWS_ENDPOINT_URL` | — | `http://localhost:4567` for Moto |
+| `AWS_DEFAULT_REGION` | `us-east-1` | Region for boto3 |
+| `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` | — | Any value for Moto (e.g. `testing`); boto3 won't send without them |
+| `METRICS_NAMESPACE` | `IncidentTriage` | CloudWatch namespace (API, Lambda, alarm) |
+
+Used elsewhere: `TRIAGE_API_URL` (default `http://127.0.0.1:8030`) and `TRIAGE_TIMEOUT_S` (`60`) by the Lambda;
+`TEST_DATABASE_URL` (`…:5438/triage_test`) and `RUN_LIVE=1` by the tests; `API_PORT` / `WEB_PORT` by compose;
+`API_URL` by the Vite dev proxy.
 
 ## 9. Web UI → API
 
@@ -199,19 +207,24 @@ files and proxies `/api/*` to the `api` container. The browser always talks to o
 | API | 8030 |
 | Web UI (Vite dev / nginx in Docker) | 5181 |
 
-## 11. Repository layout (target)
+## 11. Repository layout
 
 ```
 incident-triage-assistant/
-├── frontend/       React + Vite app (src/pages, src/components, src/api.ts), Dockerfile, nginx.conf
-├── app/            main.py, models.py, rag.py, llm.py, redact.py, metrics.py, config.py
+├── frontend/       React + Vite app (src/pages, src/components, src/api.ts, src/test), Dockerfile, nginx.conf
+├── app/            main.py, models.py, rag.py, llm.py, redact.py, history.py, metrics.py, config.py
 ├── lambda_fn/      handler.py
-├── scripts/        seed.py, expand_dataset.py, eval_retrieval.py, eval_triage.py,
-│                   replay_noise.py, simulate_s3_ingest.py, bench.py, init_test_db.sql
-├── tests/          test_triage.py (+ test_rag.py, test_lambda.py)
-├── data/           sample_logs.json, eval_queries.json, (generated) incidents_expanded.json
+├── scripts/        seed.py, expand_dataset.py, eval_retrieval.py, eval_triage.py, replay_noise.py,
+│                   simulate_s3_ingest.py, bench.py, screenshots.py, init_test_db.sql
+├── tests/          conftest.py, test_triage.py, test_rag.py, test_redact.py, test_demo.py, test_history.py,
+│                   test_eval_triage.py, test_lambda.py, test_live.py
+├── data/           sample_logs.json, families_extra.json, eval_queries.json (hand-written);
+│                   incidents_expanded.json, eval_set.json (built by expand_dataset.py, committed);
+│                   samples.json (UI samples), triage_truth.json (answer key)
 ├── results/        eval + bench outputs (JSON)
-├── docs/           REQUIREMENTS, ARCHITECTURE, DECISIONS, IMPLEMENTATION_PLAN, EVAL_PLAN
+├── docs/           REQUIREMENTS, ARCHITECTURE, DECISIONS, IMPLEMENTATION_PLAN, EVAL_PLAN, screenshots/
 ├── .github/workflows/ci.yml
-├── docker-compose.yml (db, moto; api + web under the `app` profile), Dockerfile, requirements.txt, requirements-dev.txt, ROADMAP.md, README.md
+├── docker-compose.yml (db, moto; api + web under the `app` profile), Dockerfile, .dockerignore
+├── requirements.txt, requirements-dev.txt, ruff.toml, pytest.ini, .env.example
+└── ROADMAP.md, README.md
 ```

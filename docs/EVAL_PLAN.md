@@ -15,6 +15,8 @@ number comes from a script in `scripts/` and is saved to `results/`.
 | `data/eval_queries.json` | 15 hand-written held-out logs | Source |
 | `data/incidents_expanded.json` | 235 incidents: 47 families × (1 base + 4 synthetic recurrences, `synthetic: true`) | Index (Phase 2+) |
 | `data/eval_set.json` | 53 held-out logs **never indexed**, each with `expected_family` (or `null` = no real match) | All evals |
+| `data/triage_truth.json` | Answer key per family: severity + 2 key root-cause facts with keywords | Triage eval (Phase 5) |
+| `data/samples.json` | 7 held-out logs for the UI's sample buttons, never indexed | Web UI |
 
 All incidents are fictional. `scripts/expand_dataset.py` builds the last two files deterministically.
 
@@ -43,7 +45,7 @@ Run per mode in Phase 2: `--mode vector | keyword | hybrid`.
 
 ## 3. Triage quality eval — `scripts/eval_triage.py` (Phase 5)
 
-Each eval query gets ground truth: expected incident, expected severity, and 2–4
+Each eval query gets ground truth: expected incident, expected severity, and 2
 **key facts** the root cause must mention (e.g. "connection leak", "sessions not closed").
 
 | Metric | How it's scored |

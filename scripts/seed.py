@@ -2,6 +2,7 @@
 
     python -m scripts.seed --reset              # data/incidents_expanded.json (235)
     python -m scripts.seed --file data/sample_logs.json   # just the 20 base incidents
+    python -m scripts.seed --if-empty           # only when the index is empty (container start-up)
 """
 
 import argparse
@@ -16,10 +17,14 @@ def main() -> None:
     p = argparse.ArgumentParser()
     p.add_argument("--file", default="data/incidents_expanded.json")
     p.add_argument("--reset", action="store_true", help="delete existing incidents first")
+    p.add_argument("--if-empty", action="store_true", help="do nothing if incidents already exist")
     args = p.parse_args()
 
-    incidents = [IncidentIn(**row) for row in json.load(open(args.file))]
     store = IncidentStore()
+    if args.if_empty and not args.reset and store.count() > 0:
+        print(f"index already has {store.count()} incidents, not seeding")
+        return
+    incidents = [IncidentIn(**row) for row in json.load(open(args.file))]
     if args.reset:
         store.truncate()
 

@@ -63,13 +63,13 @@ Status checked line by line on 2026-11-19 against the code and tests. ✅ met ·
 | NFR-1 | Retrieval latency (embed + search), warm | p95 < 200 ms | ✅ embed p95 29 ms, search p95 8 ms (`results/bench_2026-11-19.json`) |
 | NFR-2 | End-to-end triage latency, warm | p50 < 2 s target, **measured not assumed** (dominated by the LLM call; see DECISIONS ADR-005) | ⚠️ demo p50 25 ms ✅; with Claude ~7–15 s per call (observed, not benchmarked) ❌ — reported in README |
 | NFR-3 | Runs fully locally with no cloud bill: Docker Postgres, local embeddings, AWS emulator | required | ✅ Docker Postgres, local embeddings, Moto |
-| NFR-4 | Test suite runs without an Anthropic API key (LLM stubbed); live tests are opt-in | required | ✅ 140 tests without a key; live test opt-in |
+| NFR-4 | Test suite runs without an Anthropic API key (LLM stubbed); live tests are opt-in | required | ✅ 141 tests without a key; live test opt-in |
 | NFR-5 | Log input is untrusted: prompt-injection text inside a log must not change the system's instructions | required | ✅ tag neutralisation + prompt rule; `test_triage.py` |
 | NFR-6 | Max log size 50,000 chars; longer input rejected with 422 | required | ✅ 422 above 50,000; Lambda keeps the tail |
 | NFR-7 | Metrics publishing never fails a triage request | required | ✅ `test_lambda.py` (API + Lambda metrics failures swallowed) |
-| NFR-10 | Nothing in the default setup, tests or CI spends money: paid calls need `LLM_MODE=claude` (app) or `RUN_LIVE=1` (tests) | required | ✅ demo default; CI has no secrets; eval needs `--yes` |
-| NFR-9 | Web UI usable at phone width and in light and dark mode | required | ✅ checked at 390 px and in dark mode (triage/incidents Phase 4, Stats page Phase 6 + final review) |
 | NFR-8 | Every number in the README comes from a script in this repo that anyone can re-run | required | ✅ every README number links to `results/`; Claude latency labelled as observed |
+| NFR-9 | Web UI usable at phone width and in light and dark mode | required | ✅ checked at 390 px and in dark mode (triage/incidents Phase 4, Stats page Phase 6 + final review) |
+| NFR-10 | Nothing in the default setup, tests or CI spends money: paid calls need `LLM_MODE=claude` (app) or `RUN_LIVE=1` (tests) | required | ✅ demo default; CI has no secrets; eval needs `--yes` |
 
 ## 6. Success metrics
 
@@ -97,5 +97,5 @@ Targets are starting points. If one is missed, the README reports the real numbe
 
 - Python 3.12 in Docker; 3.13 for the local venv (3.15 lacks wheels for the ONNX runtime)
 - Ports: Postgres **5438**, Moto **4567**, API **8030**, web UI **5181** (others are taken by existing projects)
-- `ANTHROPIC_API_KEY` is not set yet; Phases 1–2 don't need it
+- `ANTHROPIC_API_KEY` lives in the gitignored `.env`; it is only used with `LLM_MODE=claude` (app) or `RUN_LIVE=1` (tests). Demo mode, tests and CI never need it
 - The historical dataset starts with 20 hand-written incidents. The 200+ set includes synthetic variants, labelled as such

@@ -40,6 +40,8 @@ services:
       AWS_ACCESS_KEY_ID: testing       # Moto accepts any; real AWS credentials never needed
       AWS_SECRET_ACCESS_KEY: testing
       AWS_DEFAULT_REGION: us-east-1
+    # First start on an empty database: index the 235 incidents, then serve.
+    command: sh -c "python -m scripts.seed --if-empty && exec uvicorn app.main:app --host 0.0.0.0 --port 8030"
     ports:
       - "${API_PORT:-8030}:8030"
     depends_on:

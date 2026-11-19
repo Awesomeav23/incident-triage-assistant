@@ -250,3 +250,18 @@ def test_health_reports_db_down_as_503(fakes):
     r = client.get("/health")
     assert r.status_code == 503
     assert r.json() == {"status": "degraded", "db": "down", "incidents_indexed": None, "llm_mode": "demo"}
+
+
+def test_top_k_default_comes_from_settings(fakes):
+    """TOP_K env var sets the default when the request omits top_k."""
+    from app.config import settings
+
+    client, store, *_ = fakes
+    object.__setattr__(settings, "top_k", 2)
+    try:
+        client.post("/triage", json={"log": REDIS_LOG})
+        assert store.search_kwargs["top_k"] == 2
+        client.post("/triage", json={"log": REDIS_LOG + " again", "top_k": 1})
+        assert store.search_kwargs["top_k"] == 1  # explicit value wins
+    finally:
+        object.__setattr__(settings, "top_k", 3)

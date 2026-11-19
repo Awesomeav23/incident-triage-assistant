@@ -12,7 +12,7 @@ Short ADRs: what was chosen, why, and what it costs.
 
 ### ADR-002 — Local embeddings with fastembed (bge-small-en-v1.5, 384-dim)
 - **Decision:** generate embeddings in-process with fastembed (ONNX, CPU).
-- **Why:** Claude has no embeddings endpoint. Local inference is free, needs no second API key, and takes ~5–15 ms per log, which protects the latency budget.
+- **Why:** Claude has no embeddings endpoint. Local inference is free, needs no second API key, and takes ~15–30 ms per log on a laptop (bench p50 20 ms, p95 29 ms), which protects the latency budget.
 - **Alternatives:** Voyage AI (better quality, needs a key, adds a network hop); OpenAI embeddings (another vendor).
 - **Cost:** a ~130 MB model download on first run (built into the Docker image); 512-token input limit, handled by normalisation and head/tail truncation.
 
@@ -65,7 +65,7 @@ Short ADRs: what was chosen, why, and what it costs.
 - **Alternative:** vector-similarity clustering. More recall, but risk of merging different bugs. Revisit if the replay shows many near-misses.
 
 ### ADR-011 — Tests run without an API key
-- **Decision:** FastAPI dependency overrides inject a fake embedder, store and LLM for unit tests. DB-backed tests use a separate `triage_test` database. Live LLM tests are skipped unless `ANTHROPIC_API_KEY` is set.
+- **Decision:** FastAPI dependency overrides inject a fake embedder, store and LLM for unit tests. DB-backed tests use a separate `triage_test` database. Live LLM tests are skipped unless both `RUN_LIVE=1` and `ANTHROPIC_API_KEY` are set (a key alone never spends).
 - **Why:** CI must be free, fast and deterministic.
 
 ### ADR-012 — React + Vite + TypeScript + Tailwind for the web UI (Phase 4)
@@ -94,4 +94,5 @@ Short ADRs: what was chosen, why, and what it costs.
 ### ADR-016 — Containers behind a compose profile (Phase 7)
 - **Decision:** `api` and `web` are in the `app` profile; `docker compose up -d` still starts only Postgres and Moto.
 - **Why:** day-to-day development runs uvicorn and Vite on the same ports (8030, 5181). The profile keeps both workflows without port clashes; `API_PORT` / `WEB_PORT` move the containers when both run.
+- **Seeding:** the `api` container runs `python -m scripts.seed --if-empty` before uvicorn, so a fresh clone gets the 235 incidents; an existing index is left alone.
 - **Secrets:** `.dockerignore` keeps `.env` out of the image; the API container reads it at run time (`env_file`, optional). Moto gets dummy credentials, so real AWS credentials are never used.

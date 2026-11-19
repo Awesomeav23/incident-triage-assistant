@@ -3,7 +3,11 @@
     pip install playwright==1.49.1   # uses your installed Google Chrome, no browser download
     python -m scripts.screenshots
 
-Each run makes real triage calls (~1 cent each).
+Captures triage, triage-no-match, incidents, incident-detail, triage-dark, triage-mobile.
+Costs nothing in demo mode (the default). With LLM_MODE=claude each triage is a paid call
+(~2-4 cents). Note: it overwrites triage.png, which the README labels as real Claude output,
+so re-run it in demo mode only if you also update that caption. duplicate.png, stats.png and
+triage-demo.png were captured by hand.
 """
 
 from pathlib import Path

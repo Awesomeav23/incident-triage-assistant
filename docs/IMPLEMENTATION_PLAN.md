@@ -22,7 +22,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - [x] `docker-compose.yml` — pgvector/pg16 on 5438 + `scripts/init_test_db.sql`
 - [x] `requirements.txt` (pinned), `.gitignore`, `.env.example`, `.venv` on Python 3.13
 - [x] `scripts/seed.py` — `--reset`, loads JSON via the store + embedder, prints count and time
-- [x] `scripts/eval_retrieval.py` — hit@1, hit@3, MRR, embed/search p50/p95 → `results/retrieval.json`
+- [x] `scripts/eval_retrieval.py` — hit@1, hit@3, MRR, embed/search p50/p95 → `results/retrieval_<date>.json`
 - [x] Smoke test: `uvicorn` + `curl /health` and `/index-incident`
 
 **Acceptance criteria**
@@ -52,9 +52,9 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 
 | Mode | hit@1 | hit@3 | MRR | search p95 |
 |---|---|---|---|---|
-| vector | 0.894 | 0.936 | 0.915 | 3.7 ms |
-| keyword | 0.872 | 0.936 | 0.904 | 5.0 ms |
-| **hybrid** | **0.936** | **0.957** | **0.950** | 4.7 ms |
+| vector | 0.894 | 0.936 | 0.915 | 6.2 ms |
+| keyword | 0.872 | 0.936 | 0.904 | 4.6 ms |
+| **hybrid** | **0.936** | **0.957** | **0.950** | 5.6 ms |
 
 - Embed p95 21.7 ms → retrieval total well under the 200 ms target.
 - Misses (hybrid): Redis timeout logged by a Java client (rank 6), missing config in a Node app (rank 2), missing Node base image (not in top 10). All three are cross-language holdouts.
@@ -74,7 +74,7 @@ Status: ✅ done · 🔄 in progress · ⬜ not started
 - [x] `tests/test_triage.py` (fakes via dependency overrides): schema, severity mapping, citation guard, no-close-match path, 502/503, 422 bounds, redaction wiring, prompt tags + injection, normalisation
 - [x] `tests/test_redact.py` — 12 secret shapes masked, ordinary text untouched, zero false positives across all 235 dataset logs
 - [x] `tests/test_rag.py` — real pgvector + embeddings on `triage_test`: every mode finds its incident, exact-code keyword match, cosine bounds, threshold filter, tsquery safety, idempotent schema
-- [x] `tests/test_live.py` (`-m live`) — skipped without `ANTHROPIC_API_KEY`
+- [x] `tests/test_live.py` (`-m live`) — skipped unless `RUN_LIVE=1` and `ANTHROPIC_API_KEY` are set
 - [x] Live test passed (2026-11-16): valid structured output, cited the matching Redis-failover incident, severity high, 5 concrete next steps. One call took ~9 s at effort `low` with Opus 5.5, well over the 2 s target; Phase 5 measures latency properly and compares models.
 
 **Result (2026-11-16):** 51 passed, 1 skipped (live) in ~2 s, no API key or network needed.
@@ -243,6 +243,13 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 - FR-16: `/health` crashed with a 500 when the database was down → 503 `{"status": "degraded", "db": "down"}`; the UI header says "Database down" instead of "API offline" (tests added; checked live by stopping Postgres)
 - FR-5 wording still described the pre-Phase-5 cutoff → rewritten to match ADR-004b
 - Remaining ⚠️, by choice: FR-14/FR-15 on Moto (script-invoked Lambda, alarm not evaluated), NFR-2 with Claude (~7–15 s observed). Tests: backend 140, frontend 35.
+
+**Independent docs-vs-code audit (2026-11-19).** A separate reviewer checked every doc claim against the code; each finding was re-verified before fixing:
+- `TOP_K` env var was read but never used → now the default `top_k` for `/triage` (test added)
+- README command for API metrics → Moto lacked dummy AWS credentials, so boto3 never sent (metrics silently skipped) → command fixed and verified end to end in a fresh namespace
+- `docker compose --profile app up` on a fresh clone served 0 incidents → the API container runs `seed --if-empty` first (verified on a throwaway empty database)
+- Stale docs fixed: `app/history.py` in ARCHITECTURE, file tree, config table (+ AWS/Lambda/test/compose vars), `/health` contract, live-test gating (`RUN_LIVE=1`), REQUIREMENTS key constraint, NFR order, Phase 1–2 search p95 and results filename, "2 key facts", dataset table, embedding speed, `service` field, `screenshots.py` docstring
+- Tests: backend 141, frontend 35
 
 **Acceptance criteria:** ✅ CI green; every README number traceable to a file in `results/` (Claude latency is labelled as observed in Phases 3–4, not benchmarked).
 

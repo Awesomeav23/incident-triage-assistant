@@ -2,6 +2,7 @@
 
     docker compose up -d db moto                       # Postgres + Moto on 4567
     METRICS_ENABLED=true AWS_ENDPOINT_URL=http://127.0.0.1:4567 \\
+    AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing \\
         uvicorn app.main:app --port 8030 --env-file .env   # API publishing metrics to Moto
     python -m scripts.simulate_s3_ingest               # upload samples, run the handler
 
@@ -92,7 +93,7 @@ def main() -> None:
     print(f"\nCloudWatch metrics in {NAMESPACE}: {', '.join(metrics) or 'none'}")
     if "SeverityScore" not in metrics:
         print("  (API metrics missing: start the API with METRICS_ENABLED=true "
-              f"AWS_ENDPOINT_URL={args.endpoint})")
+              f"AWS_ENDPOINT_URL={args.endpoint} AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing)")
     alarm = cw.describe_alarms(AlarmNames=[ALARM])["MetricAlarms"][0]
     print(f"alarm {ALARM}: SeverityScore >= {alarm['Threshold']:.0f}, state {alarm['StateValue']} "
           "(Moto stores alarms but doesn't evaluate them)")

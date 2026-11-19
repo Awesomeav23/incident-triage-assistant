@@ -46,7 +46,7 @@ flowchart LR
     L --> CW
 ```
 
-Python 3.13 · FastAPI · Claude API (`claude-opus-5-5`, structured outputs) · PostgreSQL 16 + pgvector ·
+Python 3.13 (3.12 in the API image) · FastAPI · Claude API (`claude-opus-5-5`, structured outputs) · PostgreSQL 16 + pgvector ·
 fastembed (BAAI/bge-small-en-v1.5) · React 18 + Vite + TypeScript + Tailwind · Docker · AWS S3 / Lambda / CloudWatch (Moto locally).
 Details: [Architecture](docs/ARCHITECTURE.md) · [Decisions (ADR-001–016)](docs/DECISIONS.md).
 
@@ -102,7 +102,7 @@ docker compose up -d db moto                   # Postgres + pgvector :5438, AWS 
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m scripts.expand_dataset     # build 235 incidents + 53-log eval set
 .venv/bin/python -m scripts.seed --reset       # index them
-.venv/bin/python -m pytest                     # 140 tests, no API key or AWS account needed
+.venv/bin/python -m pytest                     # 141 tests, no API key or AWS account needed
 
 cp .env.example .env                           # LLM_MODE=demo by default: free, no Claude calls
 .venv/bin/uvicorn app.main:app --port 8030 --env-file .env   # API docs: http://localhost:8030/docs
@@ -112,10 +112,13 @@ npm test                                       # 35 frontend tests
 ```
 
 - **Everything in containers:** `docker compose --profile app up -d --build` → UI :5181, API :8030
-  (stop local uvicorn/Vite first, or set `API_PORT` / `WEB_PORT`).
+  (stop local uvicorn/Vite first, or set `API_PORT` / `WEB_PORT`). On an empty database the API container
+  indexes the 235 incidents on first start (`seed --if-empty`, ~15 s), then serves.
 - **Cloud workflow:** with the API running, `python -m scripts.simulate_s3_ingest` uploads sample logs to the emulated
   bucket, runs the Lambda handler on each, and lists `triaged/`, `failed/` and the CloudWatch metrics.
-  For API metrics, start the API with `METRICS_ENABLED=true AWS_ENDPOINT_URL=http://127.0.0.1:4567`.
+  For API metrics too, start the API with
+  `METRICS_ENABLED=true AWS_ENDPOINT_URL=http://127.0.0.1:4567 AWS_ACCESS_KEY_ID=testing AWS_SECRET_ACCESS_KEY=testing`
+  (Moto accepts any credentials; without them boto3 refuses to send and the API skips metrics with a warning).
 - **Real Claude (billed per call):** set `LLM_MODE=claude` and `ANTHROPIC_API_KEY` in `.env`. Roughly 2–4 ¢ per triage with Opus.
 
 ## API

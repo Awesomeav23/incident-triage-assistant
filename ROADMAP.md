@@ -13,7 +13,7 @@ Task-level detail: [docs/IMPLEMENTATION_PLAN.md](docs/IMPLEMENTATION_PLAN.md)
 | 5 | Triage quality eval | ✅ | Eval + answer key + free demo baseline; cutoff fix (right incident shown 44→46 of 47). Claude numbers not measured (staying free) |
 | 6 | Feedback loop + noise reduction | ✅ | Repeated logs answered from history (500-log burst → 12 model calls, 97.6% avoided), 👍/✏️ feedback, Stats page |
 | 7 | Cloud workflow | ✅ | S3 upload → Lambda → `/triage` → `triaged/`, CloudWatch metrics + alarm on Moto; API + web in Docker |
-| 8 | CI + publish | ✅ | GitHub Actions (lint, 140 + 35 tests, retrieval gate, Docker builds), latency bench, final README |
+| 8 | CI + publish | ✅ | GitHub Actions (lint, 141 + 35 tests, retrieval gate, Docker builds), latency bench, final README |
 
 ## Status (as of 2026-11-19)
 

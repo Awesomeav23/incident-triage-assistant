@@ -5,6 +5,8 @@ from typing import Literal
 
 from pydantic import BaseModel, Field, model_validator
 
+from app.config import settings
+
 
 class Severity(str, Enum):
     critical = "critical"  # outage / data loss
@@ -76,8 +78,9 @@ class Sample(BaseModel):
 
 class TriageRequest(BaseModel):
     log: str = Field(..., min_length=10, max_length=50_000)
-    service: str | None = Field(None, description="Optional hint, narrows nothing yet")
-    top_k: int = Field(3, ge=1, le=10)
+    service: str | None = Field(None, description="Accepted for future use; currently ignored")
+    top_k: int = Field(default_factory=lambda: settings.top_k, ge=1, le=10,
+                       description="Defaults to the TOP_K env var (3)")
 
 
 class SimilarIncident(BaseModel):
