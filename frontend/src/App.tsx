@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { NavLink, Route, Routes } from "react-router-dom";
-import { api } from "./api";
+import { api, ApiError } from "./api";
 import { IncidentsPage } from "./pages/IncidentsPage";
 import { StatsPage } from "./pages/StatsPage";
 import { TriagePage } from "./pages/TriagePage";
@@ -45,13 +45,14 @@ function Tab({ to, children }: { to: string; children: string }) {
 }
 
 function HealthIndicator() {
-  const [state, setState] = useState<{ ok: boolean; count?: number; mode?: string } | null>(null);
+  const [state, setState] = useState<{ ok: boolean; dbDown?: boolean; count?: number; mode?: string } | null>(null);
   useEffect(() => {
     const check = () =>
       api
         .health()
         .then((h) => setState({ ok: true, count: h.incidents_indexed, mode: h.llm_mode }))
-        .catch(() => setState({ ok: false }));
+        // 503 = API up but database down (FR-16); anything else = API unreachable
+        .catch((e) => setState({ ok: false, dbDown: e instanceof ApiError && e.status === 503 }));
     check();
     const t = setInterval(check, 30_000);
     return () => clearInterval(t);
@@ -66,7 +67,7 @@ function HealthIndicator() {
       )}
       <span className="flex items-center gap-2">
         <span className={`h-2 w-2 rounded-full ${state.ok ? "bg-emerald-500" : "bg-red-500"}`} />
-        {state.ok ? `${state.count} incidents indexed` : "API offline"}
+        {state.ok ? `${state.count} incidents indexed` : state.dbDown ? "Database down" : "API offline"}
       </span>
     </span>
   );

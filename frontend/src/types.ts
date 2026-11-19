@@ -125,6 +125,7 @@ export interface Sample {
 
 export interface Health {
   status: string;
+  db: "up" | "down";
   incidents_indexed: number;
   llm_mode: "demo" | "claude";
 }

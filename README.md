@@ -102,13 +102,13 @@ docker compose up -d db moto                   # Postgres + pgvector :5438, AWS 
 python3.13 -m venv .venv && .venv/bin/pip install -r requirements-dev.txt
 .venv/bin/python -m scripts.expand_dataset     # build 235 incidents + 53-log eval set
 .venv/bin/python -m scripts.seed --reset       # index them
-.venv/bin/python -m pytest                     # 137 tests, no API key or AWS account needed
+.venv/bin/python -m pytest                     # 140 tests, no API key or AWS account needed
 
 cp .env.example .env                           # LLM_MODE=demo by default: free, no Claude calls
 .venv/bin/uvicorn app.main:app --port 8030 --env-file .env   # API docs: http://localhost:8030/docs
 
 cd frontend && npm install && npm run dev      # web UI: http://localhost:5181
-npm test                                       # 32 frontend tests
+npm test                                       # 35 frontend tests
 ```
 
 - **Everything in containers:** `docker compose --profile app up -d --build` → UI :5181, API :8030

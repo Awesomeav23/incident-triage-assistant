@@ -219,3 +219,34 @@ def test_incident_list_validates_query_params(fakes):
     assert client.get("/incidents?limit=0").status_code == 422
     assert client.get("/incidents?limit=101").status_code == 422
     assert client.get("/incidents?severity=apocalyptic").status_code == 422
+
+
+# ---------- requirement checks added in the final review ----------
+
+def test_next_steps_capped_at_five(fakes):
+    """FR-6: at most 5 next steps, even if the model returns more."""
+    client, _, _, triager = fakes
+    triager.result.next_steps = [f"step {i}" for i in range(1, 9)]
+    body = client.post("/triage", json={"log": REDIS_LOG}).json()
+    assert body["next_steps"] == ["step 1", "step 2", "step 3", "step 4", "step 5"]
+
+
+def test_health_reports_db_up(fakes):
+    client, *_ = fakes
+    body = client.get("/health").json()
+    assert body["status"] == "ok" and body["db"] == "up" and body["incidents_indexed"] == 2
+
+
+def test_health_reports_db_down_as_503(fakes):
+    """FR-16: a dead database is reported, not a crash."""
+    from app.main import app, get_store
+
+    class DeadStore:
+        def count(self):
+            raise ConnectionError("could not connect to server")
+
+    client, *_ = fakes
+    app.dependency_overrides[get_store] = lambda: DeadStore()
+    r = client.get("/health")
+    assert r.status_code == 503
+    assert r.json() == {"status": "degraded", "db": "down", "incidents_indexed": None, "llm_mode": "demo"}

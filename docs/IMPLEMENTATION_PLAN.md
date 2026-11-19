@@ -238,6 +238,12 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 
 **Result (2026-11-19):** CI green on GitHub on the first run. Bench (laptop, demo): fresh p50 25 ms / p95 39 ms, repeat p50 2.5 ms.
 
+**Final requirements review (2026-11-19, done after the user asked whether every requirement passes).** Each FR/NFR was checked against the code and tests; a status column is now in [REQUIREMENTS.md](REQUIREMENTS.md). Found and fixed:
+- FR-6: "up to 5 next steps" was only asked of the model, not enforced → `/triage` now cuts the list to 5 (test added)
+- FR-16: `/health` crashed with a 500 when the database was down → 503 `{"status": "degraded", "db": "down"}`; the UI header says "Database down" instead of "API offline" (tests added; checked live by stopping Postgres)
+- FR-5 wording still described the pre-Phase-5 cutoff → rewritten to match ADR-004b
+- Remaining ⚠️, by choice: FR-14/FR-15 on Moto (script-invoked Lambda, alarm not evaluated), NFR-2 with Claude (~7–15 s observed). Tests: backend 140, frontend 35.
+
 **Acceptance criteria:** ✅ CI green; every README number traceable to a file in `results/` (Claude latency is labelled as observed in Phases 3–4, not benchmarked).
 
 ---

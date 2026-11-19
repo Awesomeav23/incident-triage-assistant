@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 from functools import lru_cache
 
 from fastapi import Depends, FastAPI, HTTPException, Query
+from fastapi.responses import JSONResponse
 
 from app import metrics
 from app.config import settings
@@ -27,6 +28,8 @@ from app.models import (
 )
 from app.rag import Embedder, IncidentStore, get_embedder
 from app.redact import redact
+
+MAX_NEXT_STEPS = 5
 
 
 @lru_cache(maxsize=1)
@@ -53,9 +56,17 @@ app = FastAPI(title="Incident Triage Assistant", version="0.1.0", lifespan=lifes
 
 
 @app.get("/health")
-def health(store: IncidentStore = Depends(get_store)):
+def health():
+    """DB connectivity + incident count. 503 (not a crash) when the database is down."""
     mode = "claude" if settings.llm_mode == "claude" else "demo"
-    return {"status": "ok", "incidents_indexed": store.count(), "llm_mode": mode}
+    try:
+        # Resolved here, not via Depends, so a failed DB connection is caught too.
+        store = app.dependency_overrides.get(get_store, get_store)()
+        count = store.count()
+    except Exception:
+        return JSONResponse(status_code=503, content={
+            "status": "degraded", "db": "down", "incidents_indexed": None, "llm_mode": mode})
+    return {"status": "ok", "db": "up", "incidents_indexed": count, "llm_mode": mode}
 
 
 @app.get("/incidents", response_model=IncidentPage)
@@ -151,6 +162,7 @@ def triage(
     # Never let the model cite an incident it wasn't shown.
     shown = {s.id for s in similar}
     result.matched_incident_ids = [i for i in result.matched_incident_ids if i in shown]
+    result.next_steps = result.next_steps[:MAX_NEXT_STEPS]  # FR-6
 
     latency = {
         "embed": round((t1 - t0) * 1000, 1),
