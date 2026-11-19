@@ -19,10 +19,47 @@ Postgres + pgvector, answered by Claude, with a React UI and an S3 → Lambda in
 - **Ingests from CI:** upload a log to S3 `incoming/` → Lambda → `/triage` → `triaged/<job>.json`, with CloudWatch metrics and a critical-severity alarm.
 - **Free by default:** demo mode makes no Claude calls, embeddings run locally, AWS is emulated by Moto. Nothing in tests or CI spends money.
 
+## Screenshots
+
+**Real Claude answers** (Opus 5.5, captured in Phase 4, before the feedback buttons and Stats page were added):
+
 | | |
 |---|---|
-| ![Repeated log](docs/screenshots/duplicate.png) | ![Stats](docs/screenshots/stats.png) |
-| Repeated log answered from history, feedback buttons | Stats page |
+| ![No close match](docs/screenshots/triage-no-match.png) | ![Dark mode](docs/screenshots/triage-dark.png) |
+| A Rust compile error with no similar past incident: Claude reasons from the log alone and says so | Dark mode (follows the OS setting) |
+
+**Current app in free demo mode** (answers copied from the closest past incident, labelled as not AI-generated):
+
+| | |
+|---|---|
+| ![Demo mode](docs/screenshots/triage-demo.png) | ![Repeated log](docs/screenshots/duplicate.png) |
+| Triage in demo mode: severity, root cause, fix, next steps, feedback, the 3 closest past incidents, latency | The same failure again: answered from history in a few ms, no search or model call |
+| ![Correct it](docs/screenshots/feedback-form.png) | ![Stats](docs/screenshots/stats.png) |
+| ✏️ Correct it: the real root cause and fix, optionally added to the incident library | Stats: requests, answered from history, feedback accuracy, recent triages |
+| ![Incidents](docs/screenshots/incidents.png) | ![Incident detail](docs/screenshots/incident-detail.png) |
+| Past-incident library: search, severity filter, hide synthetic copies | Incident detail: log, root cause, fix |
+
+<p align="center"><img src="docs/screenshots/triage-mobile.png" alt="Mobile" width="300"><br><sub>Phone width (390 px), real Claude answer</sub></p>
+
+**Cloud workflow** (`python -m scripts.simulate_s3_ingest --count 3 --repeat-first`, on the local AWS emulator):
+
+```text
+bucket s3://incident-triage-logs  api http://127.0.0.1:8030  emulator http://127.0.0.1:4567
+
+  Redis failover                     triaged  s3://incident-triage-logs/triaged/ci/20261119-132924/job-1.json  severity=critical  reused from run #27
+  Pod OOMKilled                      triaged  s3://incident-triage-logs/triaged/ci/20261119-132924/job-2.json  severity=high  reused from run #28
+  npm lockfile drift                 triaged  s3://incident-triage-logs/triaged/ci/20261119-132924/job-3.json  severity=low  reused from run #30
+  Redis failover (repeat)            triaged  s3://incident-triage-logs/triaged/ci/20261119-132924/job-4.json  severity=critical  reused from run #27
+
+triaged/  4 object(s) from this run
+
+failed/   0 object(s) from this run
+
+CloudWatch metrics in IncidentTriage: DuplicateSuppressed, IngestDuplicate, IngestSucceeded, LLMLatencyMs, MatchedIncidents, SeverityScore, TriageLatencyMs
+alarm critical-severity-triage: SeverityScore >= 5, state OK (Moto stores alarms but doesn't evaluate them)
+```
+
+All four were answered from history because the same samples had been triaged earlier in the session ("reused from run #…").
 
 ## Architecture
 

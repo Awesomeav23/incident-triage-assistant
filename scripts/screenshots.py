@@ -6,8 +6,8 @@
 Captures triage, triage-no-match, incidents, incident-detail, triage-dark, triage-mobile.
 Costs nothing in demo mode (the default). With LLM_MODE=claude each triage is a paid call
 (~2-4 cents). Note: it overwrites triage.png, which the README labels as real Claude output,
-so re-run it in demo mode only if you also update that caption. duplicate.png, stats.png and
-triage-demo.png were captured by hand.
+so re-run it in demo mode only if you also update that caption. duplicate.png, stats.png,
+triage-demo.png and feedback-form.png were captured by hand.
 """
 
 from pathlib import Path
