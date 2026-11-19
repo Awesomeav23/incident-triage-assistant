@@ -206,7 +206,7 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 - [x] `scripts/simulate_s3_ingest.py` — creates the bucket + alarm `critical-severity-triage` (`SeverityScore` max ≥ 5, idempotent), uploads sample logs to `incoming/ci/<timestamp>/`, calls the handler with a real-shaped S3 event per upload, lists `triaged/` / `failed/` and the CloudWatch metrics
 - [x] Moto in docker-compose (`motoserver/moto:5.1.20`, port 4567)
 - [x] `Dockerfile` (python:3.12-slim, bge-small baked in, non-root user; `.dockerignore` keeps `.env`, tests, docs out — checked: no `.env` in the image)
-- [x] `frontend/Dockerfile` (Node 20.18.1 build → nginx 1.27.3) + `nginx.conf` (`/api/` → `api:8030`, SPA fallback)
+- [x] `frontend/Dockerfile` (Node 24.22.2 LTS build → nginx 1.27.3; was Node 20, bumped after its end of life) + `nginx.conf` (`/api/` → `api:8030`, SPA fallback)
 - [x] Compose `app` profile: `api` (demo mode by default, metrics → Moto with dummy credentials) and `web`; ports overridable with `API_PORT` / `WEB_PORT`
 - [x] `requirements-dev.txt` (pytest, moto) split from the runtime `requirements.txt`
 - [x] `tests/test_lambda.py` on Moto's in-memory AWS (`mock_aws`) — 19 tests: key mapping, tail truncation, triaged/failed writes, retry rules, empty log, own outputs ignored, non-create events ignored, ingest + API metrics, metrics failures swallowed, setup idempotent. Plus 1 in `test_history.py` (reused result publishes `DuplicateSuppressed`)
@@ -228,7 +228,7 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 **Tasks**
 - [x] `.github/workflows/ci.yml` — 3 jobs, no secrets, demo mode only:
   - **backend:** `ruff check`, pytest on a `pgvector/pgvector:pg16` service (+ `triage_test` DB), seed, retrieval gate (hybrid hit@3 ≥ 0.93); pip and embedding-model caches
-  - **frontend:** `npm ci`, typecheck, Vitest, build (Node 20.18.1)
+  - **frontend:** `npm ci`, typecheck, Vitest, build (Node 24.22.2 LTS; actions checkout@v7, setup-node@v7, setup-python@v7, cache@v6)
   - **docker:** builds the API and web images
 - [x] `ruff.toml` (E, F, W, I, B, UP; FastAPI `Depends` idiom allowed) — codebase clean; `ruff==0.17.6` in `requirements-dev.txt`
 - [x] `scripts/eval_retrieval.py --min-hit3 / --gate-mode` exits 1 below the floor

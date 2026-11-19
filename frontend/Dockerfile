@@ -1,5 +1,5 @@
 # Web image: build the React app, serve it with nginx, proxy /api to the API container.
-FROM node:20.18.1-alpine AS build
+FROM node:24.22.2-alpine AS build
 WORKDIR /web
 COPY package.json package-lock.json ./
 RUN npm ci
