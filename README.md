@@ -189,7 +189,8 @@ Also: `POST /feedback`, `GET /stats`, `GET /incidents`, `GET /incidents/{id}`, `
 - "No match" detection is imperfect: similarity ranges overlap, so 2 of 6 no-match logs still get a (weak) match shown.
 - Duplicate reuse is exact-fingerprint only; near-duplicates go through search instead.
 - AWS runs on Moto: the alarm is stored but not evaluated, and the Lambda is invoked by a script, not by a real S3 notification.
-  The code is the same for real AWS; deploying it is an optional extra.
+  The code is the same for real AWS; deploying it is an optional extra. It wasn't done to keep the project at $0:
+  hosting the API and database where a cloud Lambda can reach them would cost roughly $15–30 a month (ADR-009).
 - Secret redaction is regex-based and best-effort.
 
 ## Docs

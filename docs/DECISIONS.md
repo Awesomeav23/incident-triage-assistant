@@ -58,6 +58,11 @@ Short ADRs: what was chosen, why, and what it costs.
 - **Decision:** run Moto in docker-compose (port 4567) and point boto3 at it with `AWS_ENDPOINT_URL`.
 - **Why:** zero cost and no credentials; the application code is the same as for real AWS.
 - **Cost:** Moto doesn't execute the Lambda from a real S3 notification here. A script calls the handler with a real-shaped S3 event instead. A real-AWS deploy is an optional extra.
+- **Why not real AWS (decided 2026-11-19):** the project's rule is zero spend (NFR-10), and the AWS account available for it is past the free plan, so anything on real AWS would be billed.
+  - Lambda, S3 and CloudWatch alone would cost pennies: Lambda and up to ~10 metrics/alarms fall in AWS's always-free tier.
+  - The real cost is the rest: a Lambda in the cloud can't reach an API on a laptop, so the API, Postgres + pgvector and the embedding model would need hosting (e.g. EC2/ECS + RDS), roughly $15–30 a month, plus easy-to-miss charges such as a NAT gateway (~$32 a month) and public IPv4 addresses.
+  - The emulator runs the same boto3 code against the same S3/CloudWatch APIs; only `AWS_ENDPOINT_URL` changes. So the design is demonstrated and tested without the bill.
+  - Deploying for real later needs no code changes: point the handler at a reachable `TRIAGE_API_URL`, add an S3 notification filtered on `incoming/`, drop the endpoint override, and set an AWS Budget alert first.
 
 ### ADR-010 — Fingerprint dedup instead of semantic dedup (Phase 6)
 - **Decision:** dedup on SHA-256 of the normalised log within a time window.
