@@ -1,8 +1,9 @@
 """Pydantic schemas for API input/output and the LLM's structured response."""
 
 from enum import Enum
+from typing import Literal
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, model_validator
 
 
 class Severity(str, Enum):
@@ -120,3 +121,61 @@ class TriageResponse(LLMTriage):
         ..., description="embed / search / llm / total timings"
     )
     model: str
+    # Phase 6: run history + duplicate reuse
+    run_id: int | None = Field(None, description="Stored triage run; send feedback for this id")
+    duplicate_of: int | None = Field(
+        None, description="Set when this is a reused result for a log seen within the dedup window"
+    )
+    duplicate_count: int = Field(0, description="Times this log was seen again after the first triage")
+
+
+# ---------- /feedback, /stats (Phase 6) ----------
+
+
+class FeedbackIn(BaseModel):
+    triage_run_id: int
+    correct: bool
+    root_cause: str | None = Field(None, max_length=5000, description="Engineer's correction")
+    fix: str | None = Field(None, max_length=5000)
+    severity: Severity | None = None
+    index: bool = Field(False, description="Add this log + (corrected) diagnosis as a new incident")
+    title: str | None = Field(None, min_length=3, max_length=200)
+    service: str | None = Field(None, min_length=1, max_length=100)
+
+    @model_validator(mode="after")
+    def correction_needed_to_index(self):
+        if self.index and not self.correct and not (
+            self.root_cause and self.root_cause.strip() and self.fix and self.fix.strip()
+        ):
+            raise ValueError("to index a corrected triage, give the real root_cause and fix")
+        return self
+
+
+class FeedbackOut(BaseModel):
+    id: int
+    triage_run_id: int
+    correct: bool
+    indexed_as: int | None = None
+
+
+class RunSummary(BaseModel):
+    id: int
+    created_at: str
+    model: str
+    severity: Severity
+    summary: str
+    duplicate_count: int
+    feedback: Literal["correct", "incorrect"] | None = None
+
+
+class Stats(BaseModel):
+    incidents_indexed: int
+    triage_requests: int = Field(..., description="All /triage calls, including duplicates")
+    triage_runs: int = Field(..., description="Calls that ran search + the model")
+    duplicates_suppressed: int
+    feedback_count: int
+    feedback_correct: int
+    feedback_accuracy: float | None
+    indexed_from_feedback: int
+    severity_counts: dict[str, int]
+    recent_runs: list[RunSummary]

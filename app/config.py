@@ -23,6 +23,8 @@ class Settings:
     # Below this cosine similarity a match is dropped ("no close match"). 0.73 = highest
     # cutoff that kept every correct match in the Phase 2 eval (results/retrieval_*.json).
     min_similarity: float = float(os.getenv("MIN_SIMILARITY", "0.73"))
+    # Same normalised log within this many minutes → reuse the stored result (0 = off)
+    dedup_window_min: int = int(os.getenv("DEDUP_WINDOW_MIN", "60"))
     # CloudWatch metrics (pointed at the local Moto emulator by default)
     metrics_enabled: bool = os.getenv("METRICS_ENABLED", "false").lower() == "true"
     aws_endpoint_url: str | None = os.getenv("AWS_ENDPOINT_URL")

@@ -6,8 +6,9 @@ import numpy as np
 import pytest
 from fastapi.testclient import TestClient
 
+from app.history import _stats_dict
 from app.llm import LLMError, get_triager
-from app.main import app, get_store
+from app.main import app, get_runs, get_store
 from app.models import LLMTriage, Severity, SimilarIncident
 from app.rag import get_embedder
 
@@ -77,10 +78,64 @@ class FakeTriager:
         return self.result.model_copy(deep=True)
 
 
+class FakeRunStore:
+    """In-memory run history. `window_open` stands in for "created inside the dedup window"."""
+
+    def __init__(self):
+        self.runs: dict[int, dict] = {}
+        self.feedback: dict[int, dict] = {}
+        self.window_open = True
+
+    def find_recent(self, fp, model, window_min):
+        if window_min <= 0 or not self.window_open:
+            return None
+        for r in sorted(self.runs.values(), key=lambda r: -r["id"]):
+            fb = self.feedback.get(r["id"])
+            if r["fp"] == fp and r["model"] == model and not (fb and not fb["correct"]):
+                return {"id": r["id"], "result": r["result"], "duplicate_count": r["duplicate_count"]}
+        return None
+
+    def bump(self, run_id):
+        self.runs[run_id]["duplicate_count"] += 1
+        return self.runs[run_id]["duplicate_count"]
+
+    def record(self, fp, log_text, result, model, latency):
+        rid = len(self.runs) + 1
+        self.runs[rid] = {"id": rid, "fp": fp, "log_text": log_text, "result": result,
+                          "model": model, "duplicate_count": 0}
+        return rid
+
+    def get(self, run_id):
+        return self.runs.get(run_id)
+
+    def has_feedback(self, run_id):
+        return run_id in self.feedback
+
+    def add_feedback(self, fb, indexed_as):
+        self.feedback[fb.triage_run_id] = {"correct": fb.correct, "indexed_as": indexed_as}
+        return len(self.feedback)
+
+    def stats(self, recent=10):
+        fbs = list(self.feedback.values())
+        return _stats_dict(len(self.runs), sum(r["duplicate_count"] for r in self.runs.values()),
+                           len(fbs), sum(f["correct"] for f in fbs),
+                           sum(f["indexed_as"] is not None for f in fbs), {}, [])
+
+
 @pytest.fixture
-def fakes():
-    """Override the app's dependencies; yields (client, store, embedder, triager)."""
+def fake_runs():
+    return FakeRunStore()
+
+
+@pytest.fixture
+def fakes(fake_runs):
+    """Override the app's dependencies; yields (client, store, embedder, triager).
+
+    The run store is overridden too (request `fake_runs` to inspect it), so no test
+    ever touches the real database.
+    """
     store, embedder, triager = FakeStore(), FakeEmbedder(), FakeTriager()
+    app.dependency_overrides[get_runs] = lambda: fake_runs
     app.dependency_overrides[get_store] = lambda: store
     app.dependency_overrides[get_embedder] = lambda: embedder
     app.dependency_overrides[get_triager] = lambda: triager

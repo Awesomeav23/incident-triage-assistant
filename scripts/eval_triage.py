@@ -364,7 +364,8 @@ def main() -> None:
     from fastapi.testclient import TestClient
 
     from app.llm import SYSTEM_PROMPT, ClaudeTriager, DemoTriager, build_user_message, get_triager
-    from app.main import app, get_store
+    from app.history import NullRunStore
+    from app.main import app, get_runs, get_store
     from app.rag import get_embedder
     from app.redact import redact
 
@@ -399,6 +400,8 @@ def main() -> None:
         return
 
     app.dependency_overrides[get_triager] = lambda: triager
+    # Every query must reach the model: no reuse of earlier runs, nothing recorded.
+    app.dependency_overrides[get_runs] = lambda: NullRunStore()
     try:
         with TestClient(app) as client:
             def call_triage(log: str) -> dict:

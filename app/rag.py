@@ -61,10 +61,15 @@ MAX_LINE_CHARS = 1000
 HEAD_SHARE = 0.65  # rest of the budget goes to the tail
 
 
-def normalize_log(text: str) -> str:
+def strip_noise(text: str) -> list[str]:
+    """Replace run-specific tokens with placeholders; return the non-empty, stripped lines."""
     for pattern, repl in _NOISE:
         text = pattern.sub(repl, text)
-    lines = [ln.strip() for ln in text.splitlines() if ln.strip()]
+    return [ln.strip() for ln in text.splitlines() if ln.strip()]
+
+
+def normalize_log(text: str) -> str:
+    lines = strip_noise(text)
     if sum(len(ln) + 1 for ln in lines) <= MAX_EMBED_CHARS:
         return "\n".join(lines)
     lines = [ln[:MAX_LINE_CHARS] for ln in lines]
@@ -303,4 +308,4 @@ class IncidentStore:
 
     def truncate(self) -> None:
         with self.conn() as c, c.cursor() as cur:
-            cur.execute("TRUNCATE incidents RESTART IDENTITY")
+            cur.execute("TRUNCATE incidents RESTART IDENTITY CASCADE")  # + feedback rows pointing at them
