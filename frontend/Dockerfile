@@ -1,0 +1,12 @@
+# Web image: build the React app, serve it with nginx, proxy /api to the API container.
+FROM node:20.18.1-alpine AS build
+WORKDIR /web
+COPY package.json package-lock.json ./
+RUN npm ci
+COPY . .
+RUN npm run build
+
+FROM nginx:1.27.3-alpine
+COPY nginx.conf /etc/nginx/conf.d/default.conf
+COPY --from=build /web/dist /usr/share/nginx/html
+EXPOSE 80

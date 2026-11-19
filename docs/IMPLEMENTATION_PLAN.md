@@ -193,19 +193,33 @@ Each log is one of 12 real eval failures with fresh timestamps, request IDs, IPs
 
 ---
 
-## Phase 7 — Cloud workflow ⬜
-**Covers:** FR-14, FR-15, NFR-7.
+## Phase 7 — Cloud workflow ✅
+**Covers:** FR-14, FR-15, NFR-7. See ADR-009, ADR-015, ADR-016. Everything runs on the local AWS emulator (Moto): free, no AWS account.
 
 **Tasks**
-- [ ] `Dockerfile` (python:3.12-slim, embedding model baked in); `api` service in compose on 8030
-- [ ] `frontend/Dockerfile` (multi-stage: Node build → nginx); `web` service on 5181 proxying `/api` to `api`
-- [ ] Moto service on 4567
-- [ ] `lambda_fn/handler.py` — S3 event → read object → POST `/triage` → `triaged/` or `failed/`; stdlib `urllib` for HTTP
-- [ ] `scripts/simulate_s3_ingest.py` — create bucket, upload sample logs, invoke handler with S3-shaped events, print results
-- [ ] CloudWatch: metrics from API + Lambda; `put_metric_alarm` on `SeverityScore >= 5`
-- [ ] `tests/test_lambda.py` with Moto (`mock_aws`)
+- [x] `lambda_fn/handler.py` — S3 `ObjectCreated` → read `incoming/<path>` → POST `/triage` → `triaged/<path>.json` (source, time, truncated flag, full result) or `failed/<path>.json` (error + HTTP status). boto3 + stdlib only, so it deploys as one file
+  - URL-encoded keys decoded; bad bytes replaced; logs over 50k chars keep the **tail** (where errors are) and are marked `truncated`; empty logs fail without calling the API
+  - retries once on unreachable / 502–504; never on 4xx
+  - ignores anything outside `incoming/`, so its own writes can't re-trigger it
+  - metrics `IngestSucceeded`, `IngestFailed`, `IngestDuplicate`; a metrics failure never fails the invocation
+- [x] API metrics add `DuplicateSuppressed`; reused results publish metrics too (LLM latency 0)
+- [x] `scripts/simulate_s3_ingest.py` — creates the bucket + alarm `critical-severity-triage` (`SeverityScore` max ≥ 5, idempotent), uploads sample logs to `incoming/ci/<timestamp>/`, calls the handler with a real-shaped S3 event per upload, lists `triaged/` / `failed/` and the CloudWatch metrics
+- [x] Moto in docker-compose (`motoserver/moto:5.1.20`, port 4567)
+- [x] `Dockerfile` (python:3.12-slim, bge-small baked in, non-root user; `.dockerignore` keeps `.env`, tests, docs out — checked: no `.env` in the image)
+- [x] `frontend/Dockerfile` (Node 20.18.1 build → nginx 1.27.3) + `nginx.conf` (`/api/` → `api:8030`, SPA fallback)
+- [x] Compose `app` profile: `api` (demo mode by default, metrics → Moto with dummy credentials) and `web`; ports overridable with `API_PORT` / `WEB_PORT`
+- [x] `requirements-dev.txt` (pytest, moto) split from the runtime `requirements.txt`
+- [x] `tests/test_lambda.py` on Moto's in-memory AWS (`mock_aws`) — 19 tests: key mapping, tail truncation, triaged/failed writes, retry rules, empty log, own outputs ignored, non-create events ignored, ingest + API metrics, metrics failures swallowed, setup idempotent. Plus 1 in `test_history.py` (reused result publishes `DuplicateSuppressed`)
 
-**Acceptance criteria:** uploading 3 logs yields 3 result files in `triaged/`; metrics listed via `list_metrics` on Moto.
+**Result (2026-11-19, demo mode, free)**
+- Local API + Moto: 4 uploads (1 repeated) → 4 files in `triaged/`, 0 in `failed/`; the repeat was answered from history
+- Containers (`docker compose --profile app up`, on 8031/5182): 7 sample uploads → 7 in `triaged/`, 0 failed; web UI triage and `/stats` deep link work through nginx
+- CloudWatch on Moto: `TriageLatencyMs`, `LLMLatencyMs`, `SeverityScore`, `MatchedIncidents`, `DuplicateSuppressed`, `IngestSucceeded`, `IngestDuplicate`; alarm defined
+- Tests: backend 137 passed, 1 live skipped; frontend 32
+
+**Limits (honest):** Moto stores the alarm but doesn't evaluate it, and doesn't run the Lambda from an S3 notification, so the script invokes the handler directly (ADR-009). A real-AWS deploy (S3 notification filtered on `incoming/`, function URL or VPC access to the API) is optional and not done: it would need an AWS account.
+
+**Acceptance criteria:** ✅ uploading 3+ logs yields the same number of result files in `triaged/`; metrics listed via `list_metrics` on Moto.
 
 ---
 

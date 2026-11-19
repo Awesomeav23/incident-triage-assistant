@@ -277,3 +277,15 @@ def test_replay_variants_differ_in_text_but_share_a_fingerprint():
     a, b = randomize(LOG, rng), randomize(LOG, rng)
     assert a != b
     assert fingerprint(a) == fingerprint(b) != fingerprint(randomize(OTHER, rng))
+
+
+def test_reused_result_publishes_duplicate_metric(fakes, monkeypatch):
+    from app import metrics
+
+    sent = []
+    monkeypatch.setattr(metrics, "put_triage_metrics",
+                        lambda latency, score, matched, duplicate=False: sent.append((score, matched, duplicate)))
+    client, *_ = fakes
+    client.post("/triage", json={"log": LOG})
+    client.post("/triage", json={"log": LOG})
+    assert sent == [(5, 1, False), (5, 1, True)]

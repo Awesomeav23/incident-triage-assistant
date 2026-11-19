@@ -16,5 +16,46 @@ services:
       interval: 3s
       retries: 20
 
+  # Local AWS (S3 + CloudWatch) for Phase 7: free, no credentials (ADR-009)
+  moto:
+    image: motoserver/moto:5.1.20
+    container_name: triage-moto
+    ports:
+      - "4567:5000"
+
+  # Full stack in containers: docker compose --profile app up -d --build
+  # (a profile, so the default `up` doesn't clash with local uvicorn/Vite on the same ports)
+  api:
+    profiles: ["app"]
+    build: .
+    container_name: triage-api
+    env_file:
+      - path: .env          # LLM_MODE (demo by default) and, if you add it, ANTHROPIC_API_KEY
+        required: false
+    environment:
+      DATABASE_URL: postgresql://triage:triage@db:5432/triage
+      LLM_MODE: ${LLM_MODE:-demo}
+      METRICS_ENABLED: "true"
+      AWS_ENDPOINT_URL: http://moto:5000
+      AWS_ACCESS_KEY_ID: testing       # Moto accepts any; real AWS credentials never needed
+      AWS_SECRET_ACCESS_KEY: testing
+      AWS_DEFAULT_REGION: us-east-1
+    ports:
+      - "${API_PORT:-8030}:8030"
+    depends_on:
+      db:
+        condition: service_healthy
+      moto:
+        condition: service_started
+
+  web:
+    profiles: ["app"]
+    build: ./frontend
+    container_name: triage-web
+    ports:
+      - "${WEB_PORT:-5181}:80"
+    depends_on:
+      - api
+
 volumes:
   pgdata:

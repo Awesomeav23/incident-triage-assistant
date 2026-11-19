@@ -40,7 +40,7 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 | Redaction | `app/redact.py` (Phase 3) | Strip secrets from logs before storage or LLM |
 | Metrics | `app/metrics.py` | CloudWatch `put_metric_data`, never raises |
 | Config | `app/config.py` | Env-var settings |
-| Lambda | `lambda_fn/handler.py` (Phase 7) | S3 event → `/triage` → S3 result + metric |
+| Lambda | `lambda_fn/handler.py` (Phase 7) | S3 event → `/triage` → `triaged/` or `failed/` + ingest metrics; boto3 + stdlib only |
 | Scripts | `scripts/` | Seed, dataset expansion, evals, benchmark, S3 simulation |
 
 ## 3. Request flow — `POST /triage`
@@ -59,8 +59,9 @@ AWS; only `AWS_ENDPOINT_URL` changes.
 
 1. CI uploads `incoming/<job-id>.log` to the triage bucket.
 2. S3 `ObjectCreated` event invokes `lambda_fn.handler`.
-3. The handler reads the object, POSTs it to `TRIAGE_API_URL/triage`, and writes the response to `triaged/<job-id>.json`.
-4. Failures are written to `failed/<job-id>.json` with the error, so nothing is silently lost.
+3. The handler reads the object (tail kept if over 50k chars), POSTs it to `TRIAGE_API_URL/triage`, and writes the response to `triaged/<job-id>.json`.
+4. Failures are written to `failed/<job-id>.json` with the error and HTTP status, so nothing is silently lost. Unreachable/502–504 are retried once (ADR-015).
+5. Metrics: the API publishes `TriageLatencyMs`, `LLMLatencyMs`, `SeverityScore`, `MatchedIncidents`, `DuplicateSuppressed`; the handler publishes `IngestSucceeded`, `IngestFailed`, `IngestDuplicate`. Alarm `critical-severity-triage` fires on `SeverityScore` ≥ 5.
 
 Locally, `scripts/simulate_s3_ingest.py` uploads to Moto and calls the handler with a
 synthetic S3 event. Moto does not execute Lambdas itself in this setup.
@@ -212,5 +213,5 @@ incident-triage-assistant/
 ├── results/        eval + bench outputs (JSON)
 ├── docs/           REQUIREMENTS, ARCHITECTURE, DECISIONS, IMPLEMENTATION_PLAN, EVAL_PLAN
 ├── .github/workflows/ci.yml
-├── docker-compose.yml, Dockerfile, requirements.txt, ROADMAP.md, README.md
+├── docker-compose.yml (db, moto; api + web under the `app` profile), Dockerfile, requirements.txt, requirements-dev.txt, ROADMAP.md, README.md
 ```

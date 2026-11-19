@@ -123,6 +123,9 @@ def triage(
     if cached is not None:
         count = runs.bump(cached["id"])
         total = round((time.perf_counter() - t0) * 1000, 1)
+        r = cached["result"]
+        metrics.put_triage_metrics({"total": total, "llm": 0.0}, r["severity_score"],
+                                   len(r["matched_incident_ids"]), duplicate=True)
         return TriageResponse(**{
             **cached["result"],
             "redacted_secrets": redacted,

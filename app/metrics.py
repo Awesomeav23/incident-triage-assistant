@@ -20,7 +20,10 @@ def _client():
     )
 
 
-def put_triage_metrics(latency_ms: dict[str, float], severity_score: int, matched: int) -> None:
+def put_triage_metrics(
+    latency_ms: dict[str, float], severity_score: int, matched: int, duplicate: bool = False
+) -> None:
+    """One data point per /triage call. Duplicates report LLM latency 0 (no model call)."""
     if not settings.metrics_enabled:
         return
     try:
@@ -31,6 +34,7 @@ def put_triage_metrics(latency_ms: dict[str, float], severity_score: int, matche
                 {"MetricName": "LLMLatencyMs", "Value": latency_ms["llm"], "Unit": "Milliseconds"},
                 {"MetricName": "SeverityScore", "Value": severity_score, "Unit": "None"},
                 {"MetricName": "MatchedIncidents", "Value": matched, "Unit": "Count"},
+                {"MetricName": "DuplicateSuppressed", "Value": int(duplicate), "Unit": "Count"},
             ],
         )
     except Exception:  # metrics must never break triage
